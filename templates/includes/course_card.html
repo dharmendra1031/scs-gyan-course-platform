@@ -1,0 +1,8 @@
+<article class="course-card">
+  <a href="{{ course.get_absolute_url }}" aria-label="View {{ course.title }}">
+    <div class="course-cover">
+      {% if course.thumbnail %}<img src="{{ course.thumbnail.url }}" alt="" loading="lazy">{% else %}<span class="cover-decoration" aria-hidden="true">✦</span><span>LEARN WITH SCS GYAN</span>{% endif %}
+    </div>
+  </a>
+  <div class="course-body"><span class="eyebrow">{{ course.category.name }} · {{ course.get_mode_display }}</span><h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3><p>{{ course.summary }}</p><div class="course-bottom"><strong>₹{{ course.price|floatformat:0 }}</strong><a href="{{ course.get_absolute_url }}">View Course <span aria-hidden="true">→</span></a></div></div>
+</article>

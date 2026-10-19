@@ -1,0 +1,36 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="SCS Gyan — courses, study material and preparation resources.">
+  <title>{% block title %}SCS Gyan{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <div class="container navigation">
+      <a class="brand" href="{% url 'home' %}"><span class="brand-mark">S</span><span>SCS <strong>GYAN</strong><small>LEARN • GROW • SUCCEED</small></span></a>
+      <nav aria-label="Main navigation" class="nav-links">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'course_list' %}">Courses</a>
+        <a href="{% url 'about' %}">About</a>
+        <a href="{% url 'contact' %}">Contact</a>
+      </nav>
+      <div class="nav-actions">
+        {% if user.is_authenticated %}
+          <a class="button button-outline" href="{% url 'dashboard' %}">Dashboard</a>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="button button-light" type="submit">Logout</button></form>
+        {% else %}
+          <a class="button button-outline" href="{% url 'login' %}">Login</a>
+          <a class="button button-primary" href="{% url 'signup' %}">Get Started</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+  <main id="content">{% block content %}{% endblock %}</main>
+  <footer class="site-footer"><div class="container footer-inner"><div><strong>SCS Gyan</strong><p>Practical learning. Real progress.</p></div><div><a href="{% url 'course_list' %}">Courses</a><a href="{% url 'about' %}">About</a><a href="{% url 'contact' %}">Contact</a></div><small>© {% now "Y" %} SCS Gyan. All rights reserved.</small></div></footer>
+</body>
+</html>

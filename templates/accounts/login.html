@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Login | SCS Gyan{% endblock %}
+{% block content %}<section class="section"><div class="container"><div class="auth-card"><h1>Welcome back</h1><p>Sign in to your SCS Gyan account.</p><form method="post">{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}<div class="form-fields">{{ form.as_div }}</div><input type="hidden" name="next" value="{{ next }}"><button class="button button-primary full-width" type="submit">Sign In</button></form><p>New here? <a href="{% url 'signup' %}">Create an account</a></p></div></div></section>{% endblock %}
