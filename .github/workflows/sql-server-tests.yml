@@ -1,0 +1,74 @@
+name: SQL Server Integration
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [main, development]
+  workflow_dispatch:
+
+jobs:
+  sql-server:
+    runs-on: ubuntu-24.04
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: "SCS_Gyan_CI_2026_Only!"
+        ports:
+          - 1433:1433
+    env:
+      DEBUG: "True"
+      DB_ENGINE: mssql
+      DB_NAME: master
+      DB_HOST: 127.0.0.1
+      DB_PORT: "1433"
+      DB_USER: sa
+      DB_PASSWORD: "SCS_Gyan_CI_2026_Only!"
+      DB_DRIVER: ODBC Driver 18 for SQL Server
+      DB_EXTRA_PARAMS: Encrypt=yes;TrustServerCertificate=yes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install SQL Server ODBC driver
+        run: |
+          curl -fsSLO https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update -qq
+          sudo env ACCEPT_EULA=Y apt-get install -y msodbcsql18
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Wait for SQL Server
+        run: |
+          python - <<'PY'
+          import os
+          import time
+          import pyodbc
+
+          for attempt in range(45):
+              try:
+                  conn = pyodbc.connect(
+                      "DRIVER={ODBC Driver 18 for SQL Server};SERVER=127.0.0.1,1433;"
+                      f"UID=sa;PWD={os.environ['DB_PASSWORD']};"
+                      "DATABASE=master;Encrypt=yes;TrustServerCertificate=yes;",
+                      timeout=4,
+                  )
+                  conn.close()
+                  print("SQL Server is ready")
+                  break
+              except pyodbc.Error:
+                  if attempt == 44:
+                      raise
+                  time.sleep(4)
+          PY
+      - name: Validate Django on SQL Server
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+      - name: Run SQL Server integration tests
+        run: python manage.py test --noinput
