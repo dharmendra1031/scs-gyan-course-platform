@@ -1,6 +1,8 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
+
+from .storage import private_storage
 
 
 class Category(models.Model):
@@ -43,3 +45,82 @@ class Course(models.Model):
 
     def get_absolute_url(self):
         return reverse("course_detail", kwargs={"slug": self.slug})
+
+
+class Chapter(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="chapters")
+    title = models.CharField(max_length=180)
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return f"{self.course.title} - {self.title}"
+
+
+class Lesson(models.Model):
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name="lessons")
+    title = models.CharField(max_length=180)
+    position = models.PositiveIntegerField(default=0)
+    video_url = models.URLField(blank=True)
+    notes = models.FileField(
+        upload_to="lesson-notes/",
+        storage=private_storage,
+        blank=True,
+        validators=[FileExtensionValidator(["pdf"])],
+    )
+    is_published = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return self.title
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PAID = "paid", "Paid"
+        CANCELLED = "cancelled", "Cancelled"
+
+    student = models.ForeignKey("accounts.User", on_delete=models.PROTECT, related_name="course_orders")
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name="orders")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["student", "course"], name="unique_student_course_order")]
+
+    def __str__(self):
+        return f"Order #{self.pk} - {self.course.title}"
+
+
+class Enrollment(models.Model):
+    student = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="enrollments")
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name="enrollments")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["student", "course"], name="unique_course_enrollment")]
+
+    def __str__(self):
+        return f"{self.student} - {self.course}"
+
+
+class LessonProgress(models.Model):
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name="completed_lessons")
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="completions")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["enrollment", "lesson"], name="unique_lesson_completion")]
+
+    def __str__(self):
+        return f"{self.enrollment} - {self.lesson}"

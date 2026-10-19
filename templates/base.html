@@ -30,6 +30,7 @@
       </div>
     </div>
   </header>
+  {% if messages %}<div class="container" role="status">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}
   <main id="content">{% block content %}{% endblock %}</main>
   <footer class="site-footer"><div class="container footer-inner"><div><strong>SCS Gyan</strong><p>Practical learning. Real progress.</p></div><div><a href="{% url 'course_list' %}">Courses</a><a href="{% url 'about' %}">About</a><a href="{% url 'contact' %}">Contact</a></div><small>© {% now "Y" %} SCS Gyan. All rights reserved.</small></div></footer>
 </body>

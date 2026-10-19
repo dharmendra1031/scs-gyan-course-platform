@@ -1,7 +1,15 @@
-from django.db.models import Q
+from decimal import Decimal
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.db.models import Prefetch, Q
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
-from .models import Category, Course
+from .models import Category, Chapter, Course, Enrollment, Lesson, LessonProgress, Order
 
 
 class CourseListView(ListView):
@@ -34,3 +42,93 @@ class CourseDetailView(DetailView):
 
     def get_queryset(self):
         return Course.objects.filter(is_published=True).select_related("category")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["chapters"] = Chapter.objects.filter(course=self.object).prefetch_related("lessons")
+        if self.request.user.is_authenticated:
+            context["is_enrolled"] = Enrollment.objects.filter(
+                course=self.object, student=self.request.user, is_active=True
+            ).exists()
+            context["pending_order"] = Order.objects.filter(
+                course=self.object, student=self.request.user, status=Order.Status.PENDING
+            ).exists()
+        return context
+
+
+@login_required
+@require_POST
+def enroll(request, slug):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+    with transaction.atomic():
+        if Enrollment.objects.filter(course=course, student=request.user, is_active=True).exists():
+            return redirect("course_learn", slug=slug)
+        if course.price == Decimal("0"):
+            Enrollment.objects.update_or_create(
+                student=request.user, course=course, defaults={"is_active": True}
+            )
+            messages.success(request, "You are enrolled in this course.")
+            return redirect("course_learn", slug=slug)
+        # Never grant access to a paid course until payment is verified.
+        order, created = Order.objects.get_or_create(
+            student=request.user, course=course,
+            defaults={"amount": course.price},
+        )
+        if not created and order.status == Order.Status.CANCELLED:
+            order.status = Order.Status.PENDING
+            order.amount = course.price
+            order.save(update_fields=["status", "amount", "updated_at"])
+    messages.info(request, "Your order is pending payment verification. Course access is not active yet.")
+    return redirect("dashboard")
+
+
+def enrolled_lesson(request, lesson_id):
+    lesson = get_object_or_404(
+        Lesson.objects.select_related("chapter__course"),
+        pk=lesson_id, is_published=True, chapter__course__is_published=True,
+    )
+    enrollment = get_object_or_404(
+        Enrollment, course=lesson.chapter.course, student=request.user, is_active=True
+    )
+    return lesson, enrollment
+
+
+@login_required
+def learn(request, slug):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+    enrollment = get_object_or_404(Enrollment, course=course, student=request.user, is_active=True)
+    chapters = course.chapters.prefetch_related(
+        Prefetch("lessons", queryset=Lesson.objects.filter(is_published=True))
+    )
+    completed_ids = set(enrollment.completed_lessons.values_list("lesson_id", flat=True))
+    return render(request, "courses/learn.html", {
+        "course": course, "chapters": chapters, "completed_ids": completed_ids,
+    })
+
+
+@login_required
+def lesson_detail(request, lesson_id):
+    lesson, enrollment = enrolled_lesson(request, lesson_id)
+    completed = enrollment.completed_lessons.filter(lesson=lesson).exists()
+    return render(request, "courses/lesson.html", {"lesson": lesson, "completed": completed})
+
+
+@login_required
+def download_notes(request, lesson_id):
+    lesson, _ = enrolled_lesson(request, lesson_id)
+    if not lesson.notes:
+        raise Http404("Notes are not available.")
+    try:
+        file = lesson.notes.open("rb")
+    except FileNotFoundError as exc:
+        raise Http404("Notes are not available.") from exc
+    return FileResponse(file, as_attachment=True, filename=f"lesson-{lesson.pk}.pdf", content_type="application/pdf")
+
+
+@login_required
+@require_POST
+def complete_lesson(request, lesson_id):
+    lesson, enrollment = enrolled_lesson(request, lesson_id)
+    LessonProgress.objects.get_or_create(enrollment=enrollment, lesson=lesson)
+    messages.success(request, "Lesson marked as complete.")
+    return redirect("course_learn", slug=lesson.chapter.course.slug)

@@ -1,3 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Student Dashboard | SCS Gyan{% endblock %}
-{% block content %}<section class="page-banner"><div class="container"><span class="eyebrow accent">STUDENT PORTAL</span><h1>Welcome, {{ request.user.first_name|default:request.user.username }}</h1><p>Your learning dashboard will show enrolled courses once purchases are enabled.</p><a class="button button-primary" href="{% url 'course_list' %}">Explore Courses →</a></div></section>{% endblock %}
+{% block content %}
+<section class="page-banner"><div class="container"><span class="eyebrow accent">STUDENT PORTAL</span><h1>Welcome, {{ request.user.first_name|default:request.user.username }}</h1><p>Your courses and learning progress.</p></div></section>
+<section class="section"><div class="container"><h2>My Courses</h2><div class="card-grid">
+{% for enrollment in enrollments %}<article class="details-panel"><h3>{{ enrollment.course.title }}</h3><p>{{ enrollment.completed_count }} of {{ enrollment.lesson_count }} lessons completed</p><a class="button button-primary" href="{% url 'course_learn' enrollment.course.slug %}">Continue learning →</a></article>
+{% empty %}<p>No active courses yet. <a href="{% url 'course_list' %}">Explore courses</a>.</p>{% endfor %}
+</div>{% if orders %}<h2>Orders</h2><div class="card-grid">{% for order in orders %}<article class="details-panel"><h3>{{ order.course.title }}</h3><p>₹{{ order.amount }} · {{ order.get_status_display }}</p>{% if order.status == 'pending' %}<p class="subtle">Awaiting payment verification. No payment has been collected by this website.</p>{% endif %}</article>{% endfor %}</div>{% endif %}</div></section>
+{% endblock %}
