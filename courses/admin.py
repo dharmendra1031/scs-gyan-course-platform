@@ -86,6 +86,15 @@ class EnrollmentAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "course")
     search_fields = ("student__email", "course__title")
 
+    def has_add_permission(self, request):
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(LessonProgress)
 class LessonProgressAdmin(admin.ModelAdmin):
@@ -93,4 +102,10 @@ class LessonProgressAdmin(admin.ModelAdmin):
     readonly_fields = ("enrollment", "lesson", "completed_at")
 
     def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False

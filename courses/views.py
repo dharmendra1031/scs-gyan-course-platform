@@ -4,8 +4,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Prefetch, Q
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
@@ -107,6 +108,7 @@ def learn(request, slug):
 
 
 @login_required
+@never_cache
 def lesson_detail(request, lesson_id):
     lesson, enrollment = enrolled_lesson(request, lesson_id)
     completed = enrollment.completed_lessons.filter(lesson=lesson).exists()
@@ -114,6 +116,16 @@ def lesson_detail(request, lesson_id):
 
 
 @login_required
+@never_cache
+def open_video(request, lesson_id):
+    lesson, _ = enrolled_lesson(request, lesson_id)
+    if not lesson.video_url:
+        raise Http404("Video is not available.")
+    return HttpResponseRedirect(lesson.video_url)
+
+
+@login_required
+@never_cache
 def download_notes(request, lesson_id):
     lesson, _ = enrolled_lesson(request, lesson_id)
     if not lesson.notes:
