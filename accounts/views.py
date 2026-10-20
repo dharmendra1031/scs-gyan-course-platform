@@ -4,6 +4,7 @@ from django.db.models import Count, Q
 from django.shortcuts import redirect, render
 
 from courses.models import Enrollment, Order
+from courses.payments import gateway_enabled
 
 from .forms import SignupForm
 
@@ -35,4 +36,5 @@ def dashboard(request):
     orders = Order.objects.filter(student=request.user).select_related("course")
     return render(request, "accounts/dashboard.html", {
         "enrollments": enrollments, "orders": orders,
+        "payments_enabled": gateway_enabled(),
     })

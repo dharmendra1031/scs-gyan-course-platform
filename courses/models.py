@@ -89,6 +89,9 @@ class Order(models.Model):
     course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name="orders")
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    gateway_order_id = models.CharField(max_length=70, blank=True, null=True, unique=True)
+    gateway_payment_id = models.CharField(max_length=70, blank=True, null=True, unique=True)
+    verified_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

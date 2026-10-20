@@ -1,8 +1,11 @@
 from django.urls import path
 
-from . import views
+from . import views, payment_views
 
 urlpatterns = [
+    path("payments/<int:order_id>/checkout/", payment_views.checkout, name="course_checkout"),
+    path("payments/<int:order_id>/verify/", payment_views.verify_payment, name="course_payment_verify"),
+    path("payments/webhook/", payment_views.payment_webhook, name="course_payment_webhook"),
     path("", views.CourseListView.as_view(), name="course_list"),
     path("<slug:slug>/", views.CourseDetailView.as_view(), name="course_detail"),
     path("<slug:slug>/enroll/", views.enroll, name="course_enroll"),
