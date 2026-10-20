@@ -133,6 +133,19 @@ class PaymentTests(TestCase):
             )
         self.assertEqual(Enrollment.objects.count(), 1)
 
+    def test_signed_malformed_webhook_is_rejected(self):
+        body = b'[]'
+        signature = hmac.new(b"webhook-secret", body, hashlib.sha256).hexdigest()
+        self.assertEqual(
+            self.client.post(
+                reverse("course_payment_webhook"), body,
+                content_type="application/json",
+                HTTP_X_RAZORPAY_SIGNATURE=signature,
+            ).status_code,
+            400,
+        )
+        self.assertFalse(Enrollment.objects.exists())
+
     @override_settings(RAZORPAY_KEY_ID="", RAZORPAY_KEY_SECRET="")
     def test_missing_credentials_never_enroll(self):
         self.client.force_login(self.user)

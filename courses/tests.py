@@ -148,6 +148,25 @@ class EnrollmentTests(TestCase):
         self.assertEqual(self.client.get(reverse("lesson_detail", args=[self.lesson.pk])).status_code, 404)
         self.assertEqual(self.client.post(reverse("course_enroll", args=[self.course.slug])).status_code, 404)
 
+    def test_cancelled_payment_reference_requires_support(self):
+        from .models import Order
+
+        order = Order.objects.create(
+            student=self.user, course=self.course, amount=self.course.price,
+            status=Order.Status.CANCELLED, gateway_order_id="order_old_reference",
+        )
+        self.course.price = Decimal("799.00")
+        self.course.save(update_fields=["price"])
+        self.client.force_login(self.user)
+        self.assertRedirects(
+            self.client.post(reverse("course_enroll", args=[self.course.slug])),
+            reverse("dashboard"),
+        )
+        order.refresh_from_db()
+        self.assertEqual(order.status, Order.Status.CANCELLED)
+        self.assertEqual(order.gateway_order_id, "order_old_reference")
+        self.assertEqual(order.amount, Decimal("599.00"))
+
     def test_cancelled_order_cannot_be_approved(self):
         from .models import Order
         from .services import approve_order

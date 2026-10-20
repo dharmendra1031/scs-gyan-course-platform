@@ -76,6 +76,9 @@ def enroll(request, slug):
             defaults={"amount": course.price},
         )
         if not created and order.status == Order.Status.CANCELLED:
+            if order.gateway_order_id or order.gateway_payment_id:
+                messages.error(request, "Please contact support to review this cancelled payment.")
+                return redirect("dashboard")
             order.status = Order.Status.PENDING
             order.amount = course.price
             order.save(update_fields=["status", "amount", "updated_at"])

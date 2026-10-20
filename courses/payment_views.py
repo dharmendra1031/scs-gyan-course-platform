@@ -82,11 +82,13 @@ def payment_webhook(request):
         return HttpResponseBadRequest("Invalid webhook signature.")
     try:
         event = json.loads(request.body)
+        if not isinstance(event, dict):
+            return HttpResponseBadRequest("Invalid webhook payload.")
         if event.get("event") != "payment.captured":
             return HttpResponse(status=200)
         payment = event["payload"]["payment"]["entity"]
         order = Order.objects.get(gateway_order_id=payment["order_id"])
         confirm_gateway_payment(order.pk, payment["order_id"], payment)
-    except (KeyError, TypeError, ValueError, Order.DoesNotExist):
+    except (KeyError, TypeError, ValueError, AttributeError, Order.DoesNotExist):
         return HttpResponseBadRequest("Invalid webhook payload.")
     return HttpResponse(status=200)

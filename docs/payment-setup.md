@@ -30,3 +30,16 @@ payment-gateway success callback.
 
 The GitHub CI tests mock gateway API responses; **they cannot certify real bank
 transactions**. Use Razorpay's official test mode before going live.
+
+## Current limitations and acceptance
+
+- The student **payment acknowledgement** uses the verified Razorpay reference.
+  A manually approved order instead displays an enrollment confirmation.
+  Neither document is a GST tax invoice.
+- Old cancelled orders with a gateway reference cannot be silently reused at a
+  new course price; ask support to reconcile or refund the original attempt.
+- Payment refunds, partial refunds and tax invoices are not implemented.
+  Reconciliation and real Razorpay sandbox tests are still required.
+- Lesson video links require an active enrollment before redirecting to the
+  external video provider. This is not DRM: an externally shared provider URL
+  might still work independently of SCS Gyan.
