@@ -47,6 +47,9 @@ class LessonAdmin(admin.ModelAdmin):
 
 @admin.action(description="Approve verified payments and enroll students")
 def approve_verified_payments(modeladmin, request, queryset):
+    if not request.user.is_superuser:
+        modeladmin.message_user(request, "Only superusers can approve payments.", messages.ERROR)
+        return
     approved = 0
     for order in queryset:
         if order.status != Order.Status.PENDING:
@@ -63,6 +66,12 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ("student__username", "student__email", "course__title")
     readonly_fields = ("student", "course", "amount", "status", "created_at", "updated_at")
     actions = [approve_verified_payments]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            actions.pop('approve_verified_payments', None)
+        return actions
 
     def has_add_permission(self, request):
         return False
