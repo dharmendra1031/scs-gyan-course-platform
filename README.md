@@ -49,19 +49,33 @@ python manage.py test
 python manage.py makemigrations --check --dry-run
 ```
 
-The initial GitHub Actions workflow runs unit tests against temporary SQLite to catch application regressions quickly. A dedicated SQL Server integration job, payment gateway sandbox tests and Playwright E2E tests are **not implemented yet**. Those are required before production acceptance.
+GitHub Actions runs the Django unit tests on SQLite, a separate SQL Server
+integration workflow (SQL Server 2022 container), and Playwright Chromium browser
+tests on each push to `development` and pull request to `main`.
 
-## Existing first slice
+## Implemented so far
 
-- Responsive homepage, about and contact placeholders
-- Published course catalog, category/search filters and course details
-- Student signup, login, logout and protected dashboard placeholder
-- Course/category management in Django Admin
-- Initial migrations, security defaults and basic unit tests
+- Public course catalog and responsive pages
+- Student signup, login and course dashboard
+- Course, Chapter and Lesson management in Django Admin
+- Free enrollment, pending paid orders, student lesson progress, protected PDF notes
+- Optional Razorpay checkout with server-side signature verification, payment capture
+  validation, idempotent webhooks, and superuser-only manual approval
+- Numeric auto-increment IDs (BigAutoField) for application models
 
-## Next phase (not yet implemented)
+## Payment setup
 
-Approved UI design, checkout/payments, enrollment, lessons, media, quizzes, test series, articles/current affairs, SEO editor, receipts, reports, bookstore/DLP workflows and integration testing.
+See [Payment Setup](docs/payment-setup.md). Leave the gateway keys blank until the
+client selects Razorpay and its test-mode account is ready. The gateway is disabled
+without both key ID and secret. A successful CI run **does not** mean live money
+handling or production deployment has been verified.
+
+## Remaining
+
+- Razorpay test-mode acceptance with actual provider API/webhooks
+- Production database and storage verification; receipts/refunds and dispute processes
+- UI/UX acceptance, quizzes/test series, articles/current affairs, SEO, reports,
+  bookstore/DLP workflows, deployment and real production security review
 
 ## Important
 
