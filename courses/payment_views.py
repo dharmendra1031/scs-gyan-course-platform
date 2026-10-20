@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -62,6 +63,16 @@ def verify_payment(request, order_id):
         return HttpResponseBadRequest("Payment has not been captured for this order.")
     messages.success(request, "Payment verified. Your course is now available.")
     return redirect("course_learn", slug=order.course.slug)
+
+
+@login_required
+@never_cache
+def payment_receipt(request, order_id):
+    order = get_object_or_404(
+        Order.objects.select_related("course"),
+        pk=order_id, student=request.user, status=Order.Status.PAID,
+    )
+    return render(request, "courses/receipt.html", {"order": order})
 
 
 @csrf_exempt
