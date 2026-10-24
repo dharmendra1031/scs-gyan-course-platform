@@ -91,3 +91,15 @@ handling or production deployment has been verified.
 ## Important
 
 Do not commit `.env`, SQL connection strings, payment secrets or licensed course assets. Public repositories expose their entire committed history. Require pull-request reviews and passing CI checks before merging to `main`.
+
+## Phase 6 additions
+
+- Editable SEO metadata, canonical links, published-only XML sitemap and robots.txt
+- Course-completion certificate PDFs after completing all published lessons
+- Student in-app notifications for enrollment, payment confirmation and certificate issue
+- Production configuration checks and deployment checklist (see
+  [Production Checklist](docs/production-checklist.md))
+
+**Not yet accepted for production:** Real Razorpay sandbox transactions and refunds,
+approved domain/hosting, backups, production private storage, end-to-end admin UI
+acceptance, and deployment monitoring.
