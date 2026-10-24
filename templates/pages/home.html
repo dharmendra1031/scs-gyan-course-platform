@@ -1,8 +1,57 @@
 {% extends "base.html" %}
 {% block title %}SCS Gyan | Learn with Confidence{% endblock %}
 {% block content %}
-<section class="hero"><div class="container hero-grid"><div class="hero-copy"><span class="pill">YOUR JOURNEY STARTS HERE</span><h1>Build knowledge.<br><em>Shape your future.</em></h1><p>Expert-led learning, flexible courses and meaningful preparation — all in one place.</p><div class="hero-actions"><a href="{% url 'course_list' %}" class="button button-primary button-large">Explore Courses <span aria-hidden="true">→</span></a><a href="{% url 'about' %}" class="text-link">Discover SCS Gyan</a></div><div class="hero-benefits"><span>✓ Learn at your pace</span><span>✓ Guided preparation</span></div></div><div class="hero-visual" aria-label="SCS Gyan learning illustration" role="img"><div class="illustration-top">SCS GYAN <span>✦</span></div><div class="illustration-display"><div class="play-icon" aria-hidden="true">✦</div><p>YOUR NEXT CHAPTER<br><strong>STARTS HERE</strong></p></div><div class="illustration-bottom"><span>Learning made simple</span><span class="dots">● ● ●</span></div></div></div></section>
-<section class="section section-white"><div class="container"><div class="section-header"><div><span class="eyebrow accent">EXPLORE WHAT'S POSSIBLE</span><h2>Find the right course for you</h2><p>Browse programmes designed to help you progress.</p></div><a class="text-link" href="{% url 'course_list' %}">All Courses →</a></div><div class="card-grid">{% for course in featured_courses %}{% include "includes/course_card.html" %}{% empty %}<p class="empty-state">Courses are coming soon. Visit again shortly.</p>{% endfor %}</div></div></section>
-<section class="section section-warm"><div class="container"><div class="section-header center"><span class="eyebrow accent">WHY SCS GYAN</span><h2>Everything you need to keep moving</h2></div><div class="benefit-grid"><div><span class="feature-icon">▣</span><h3>Structured courses</h3><p>Clear learning paths from foundations to advanced topics.</p></div><div><span class="feature-icon">◉</span><h3>Learn your way</h3><p>Course options that fit your schedule and goals.</p></div><div><span class="feature-icon">✓</span><h3>Track your progress</h3><p>Stay organised throughout your learning journey.</p></div></div></div></section>
-<section class="cta-section"><div class="container"><div><h2>Ready to begin your next chapter?</h2><p>Explore our programmes and take the first step.</p></div><a class="button button-white button-large" href="{% url 'course_list' %}">Browse Courses →</a></div></section>
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="pill"><span class="pill-dot" aria-hidden="true"></span> YOUR PREPARATION, OUR PRIORITY</span>
+      <h1>Prepare with purpose.<br><em>Achieve with confidence.</em></h1>
+      <p>Build a stronger foundation with structured courses, current affairs and focused practice — all in one learning space.</p>
+      <div class="hero-actions">
+        <a class="button button-primary button-large" href="{% url 'course_list' %}">Explore Courses <span aria-hidden="true">↗</span></a>
+        <a class="text-link" href="{% url 'article_list' %}">Read Current Affairs →</a>
+      </div>
+      <div class="hero-benefits"><span>Learn at your pace</span><span>Practice with purpose</span><span>Track your progress</span></div>
+    </div>
+    <div class="hero-visual" role="img" aria-label="SCS Gyan learning journey: study, practice and progress">
+      <div class="learning-board">
+        <div class="board-top"><strong>SCS GYAN ✦</strong><span class="board-chip">YOUR STUDY SPACE</span></div>
+        <div class="board-heading"><small>STUDY • PRACTICE • PROGRESS</small><strong>Every lesson brings you closer.</strong></div>
+        <div class="board-steps">
+          <div class="board-step"><span>01</span><div><strong>Build your foundation</strong><small>Explore structured subjects</small></div></div>
+          <div class="board-step"><span>02</span><div><strong>Stay informed</strong><small>Read current affairs and insights</small></div></div>
+          <div class="board-step"><span>03</span><div><strong>Check your progress</strong><small>Learn through quizzes and practice</small></div></div>
+        </div>
+      </div>
+      <div class="hero-stamp"><span aria-hidden="true">✦</span> Learn • Grow • Succeed</div>
+    </div>
+  </div>
+</section>
+<section class="section section-white">
+  <div class="container">
+    <div class="section-header"><div><span class="eyebrow accent">OUR PROGRAMMES</span><h2>Discover courses for your next step</h2><p>Choose a programme that fits your learning goals.</p></div><a class="text-link" href="{% url 'course_list' %}">View all courses →</a></div>
+    <div class="card-grid">{% for course in featured_courses %}{% include "includes/course_card.html" %}{% empty %}<p class="empty-state">Courses are coming soon. Visit again shortly.</p>{% endfor %}</div>
+  </div>
+</section>
+<section class="section section-warm">
+  <div class="container">
+    <div class="section-header center"><span class="eyebrow accent">WHY SCS GYAN</span><h2>A clearer way to prepare</h2><p>Everything you need to keep learning, organised in one place.</p></div>
+    <div class="benefit-grid">
+      <div><span class="feature-icon" aria-hidden="true">▤</span><h3>Structured courses</h3><p>Follow clear learning paths, from foundational concepts to focused revision.</p></div>
+      <div><span class="feature-icon" aria-hidden="true">◎</span><h3>Stay exam-ready</h3><p>Build your understanding with current affairs and topic-based practice.</p></div>
+      <div><span class="feature-icon" aria-hidden="true">✓</span><h3>Progress at your pace</h3><p>Return to lessons and track your learning from your student dashboard.</p></div>
+    </div>
+  </div>
+</section>
+<section class="section section-white">
+  <div class="container">
+    <div class="section-header"><div><span class="eyebrow accent">KEEP LEARNING</span><h2>More ways to move forward</h2><p>Explore useful resources beyond your course lessons.</p></div></div>
+    <div class="learning-links">
+      <a class="learning-link" href="{% url 'course_list' %}"><span>01 · COURSES</span><span class="link-arrow" aria-hidden="true">↗</span><strong>Study programmes</strong><small>Browse available learning paths</small></a>
+      <a class="learning-link" href="{% url 'article_list' %}"><span>02 · CURRENT AFFAIRS</span><span class="link-arrow" aria-hidden="true">↗</span><strong>News &amp; insights</strong><small>Explore published articles and analysis</small></a>
+      <a class="learning-link" href="{% url 'daily_quizzes' %}"><span>03 · PRACTICE</span><span class="link-arrow" aria-hidden="true">↗</span><strong>Daily quiz</strong><small>Review what you know</small></a>
+    </div>
+  </div>
+</section>
+<section class="cta-section"><div class="container"><div><h2>Make your next study session count.</h2><p>Find your course and keep moving toward your goals.</p></div><a class="button button-white button-large" href="{% url 'course_list' %}">Browse Courses →</a></div></section>
 {% endblock %}
