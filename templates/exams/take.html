@@ -7,7 +7,8 @@
   <p>{{ assessment.duration_minutes }} minutes · One attempt · Answers are saved only on submission.</p>
 </div></section>
 <section class="section"><div class="container narrow">
-  <form method="post">{% csrf_token %}
+  <p id="exam-time-left" class="pill" data-deadline="{{ expires_at|date:'c' }}" role="timer">Time remaining: calculating…</p>
+  <form method="post" id="assessment-form">{% csrf_token %}
     {% for question in questions %}
       <fieldset class="details-panel" style="margin-bottom:20px">
         <legend><strong>{{ forloop.counter }}. {{ question.text }}</strong></legend>
@@ -23,4 +24,17 @@
     <button type="submit" class="button button-primary">Submit answers</button>
   </form>
 </div></section>
+<script>
+  const timer = document.getElementById("exam-time-left");
+  const form = document.getElementById("assessment-form");
+  function updateTimer() {
+    const remaining = Math.max(0, Math.ceil((Date.parse(timer.dataset.deadline) - Date.now()) / 1000));
+    const minutes = Math.floor(remaining / 60);
+    const seconds = String(remaining % 60).padStart(2, "0");
+    timer.textContent = `Time remaining: ${minutes}:${seconds}`;
+    if (remaining === 0) form.submit();
+  }
+  updateTimer();
+  setInterval(updateTimer, 1000);
+</script>
 {% endblock %}

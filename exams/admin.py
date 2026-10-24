@@ -1,5 +1,6 @@
+from django import forms
 from django.contrib import admin
-from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
 from django.db.models import Avg, Count
 from django.template.response import TemplateResponse
 from django.urls import path
@@ -7,25 +8,67 @@ from django.urls import path
 from .models import Assessment, Attempt, AttemptAnswer, Choice, Question
 
 
+class AssessmentForm(forms.ModelForm):
+    class Meta:
+        model = Assessment
+        fields = "__all__"
+
+    def clean_duration_minutes(self):
+        duration = self.cleaned_data["duration_minutes"]
+        if duration < 1:
+            raise forms.ValidationError("Duration must be at least one minute.")
+        return duration
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("is_published") and (
+            not self.instance.pk or not self.instance.questions.exists()
+        ):
+            raise forms.ValidationError("Create questions before publishing this assessment.")
+        return cleaned
+
+
 @admin.register(Assessment)
 class AssessmentAdmin(admin.ModelAdmin):
+    form = AssessmentForm
     list_display = ("title", "course", "kind", "duration_minutes", "is_published")
     list_filter = ("kind", "is_published", "course")
     search_fields = ("title", "course__title")
 
-    def save_model(self, request, obj, form, change):
-        if obj.duration_minutes == 0:
-            raise ValidationError("Duration must be at least one minute.")
-        super().save_model(request, obj, form, change)
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = "__all__"
+
+    def clean_marks(self):
+        marks = self.cleaned_data["marks"]
+        if marks < 1:
+            raise forms.ValidationError("Marks must be at least one.")
+        return marks
+
+
+class ChoiceFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        choices = [
+            form.cleaned_data for form in self.forms
+            if form.cleaned_data and not form.cleaned_data.get("DELETE")
+        ]
+        if len(choices) < 2 or sum(bool(choice.get("is_correct")) for choice in choices) != 1:
+            raise forms.ValidationError("Add at least two choices and mark exactly one correct.")
 
 
 class ChoiceInline(admin.TabularInline):
     model = Choice
+    formset = ChoiceFormSet
     extra = 4
 
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
+    form = QuestionForm
     list_display = ("text", "assessment", "position", "marks")
     list_filter = ("assessment",)
     search_fields = ("text",)
