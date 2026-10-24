@@ -121,12 +121,21 @@ def learn(request, slug):
         chapter__course=course, is_published=True,
     ).values_list("id", flat=True))
     certificate = CourseCertificate.objects.filter(enrollment=enrollment).first()
+    chapters = list(chapters)
+    next_lesson = next(
+        (lesson for chapter in chapters for lesson in chapter.lessons.all()
+         if lesson.pk not in completed_ids),
+        None,
+    )
     return render(request, "courses/learn.html", {
         "course": course, "chapters": chapters, "completed_ids": completed_ids,
         "assessments": course.assessments.filter(is_published=True),
         "materials": course.materials.filter(is_published=True),
         "certificate": certificate,
         "certificate_ready": bool(published_ids and published_ids.issubset(completed_ids)),
+        "published_count": len(published_ids),
+        "completed_count": len(published_ids.intersection(completed_ids)),
+        "next_lesson": next_lesson,
     })
 
 
@@ -135,7 +144,17 @@ def learn(request, slug):
 def lesson_detail(request, lesson_id):
     lesson, enrollment = enrolled_lesson(request, lesson_id)
     completed = enrollment.completed_lessons.filter(lesson=lesson).exists()
-    return render(request, "courses/lesson.html", {"lesson": lesson, "completed": completed})
+    lessons = list(
+        Lesson.objects.filter(chapter__course=lesson.chapter.course, is_published=True)
+        .order_by("chapter__position", "chapter__id", "position", "id")
+        .only("id", "title")
+    )
+    position = next(index for index, item in enumerate(lessons) if item.pk == lesson.pk)
+    return render(request, "courses/lesson.html", {
+        "lesson": lesson, "completed": completed,
+        "previous_lesson": lessons[position - 1] if position else None,
+        "next_lesson": lessons[position + 1] if position + 1 < len(lessons) else None,
+    })
 
 
 @login_required

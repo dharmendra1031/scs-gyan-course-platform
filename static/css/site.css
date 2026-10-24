@@ -618,6 +618,30 @@ img {
     accent-color:var(--blue)
 }
 
+.learning-chapter {
+    margin-bottom:18px
+}
+
+.lesson-list {
+    padding-left:22px
+}
+
+.lesson-list li {
+    margin:12px 0
+}
+
+.lesson-list .subtle {
+    margin-left:12px
+}
+
+.lesson-navigation {
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+    margin-top:28px
+}
+
 .auth-card {
     max-width:500px;
     padding:40px;
