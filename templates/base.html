@@ -12,9 +12,10 @@
 </head>
 <body>
   <a class="skip-link" href="#content">Skip to content</a>
+  <div class="topbar"><div class="container"><span>Learning today. Leading tomorrow.</span><a href="{% url 'daily_quizzes' %}">Explore Daily Quiz →</a></div></div>
   <header class="site-header">
     <div class="container navigation">
-      <a class="brand" href="{% url 'home' %}"><span class="brand-mark">S</span><span>SCS <strong>GYAN</strong><small>LEARN • GROW • SUCCEED</small></span></a>
+      <a class="brand" href="{% url 'home' %}"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11c-5-4-11-5-16-3v22c6-2 11-1 16 3 5-4 10-5 16-3V8c-5-2-11-1-16 3Z"/><path d="M20 11v22M9 15h6m10 0h6"/></svg></span><span>SCS <strong>GYAN</strong><small>LEARN • GROW • SUCCEED</small></span></a>
       <button class="menu-toggle button button-outline" type="button"
         aria-controls="main-nav" aria-expanded="false">Menu</button>
       <nav id="main-nav" aria-label="Main navigation" class="nav-links">
@@ -38,7 +39,7 @@
   </header>
   {% if messages %}<div class="container" role="status">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}
   <main id="content">{% block content %}{% endblock %}</main>
-  <footer class="site-footer"><div class="container footer-inner"><div><strong>SCS Gyan</strong><p>Practical learning. Real progress.</p></div><div><a href="{% url 'course_list' %}">Courses</a><a href="{% url 'about' %}">About</a><a href="{% url 'contact' %}">Contact</a></div><small>© {% now "Y" %} SCS Gyan. All rights reserved.</small></div></footer>
+  <footer class="site-footer"><div class="container footer-inner"><div><strong>SCS Gyan</strong><p>Learning, practice and preparation in one place.</p></div><div><a href="{% url 'course_list' %}">Courses</a><a href="{% url 'article_list' %}">Current Affairs</a><a href="{% url 'about' %}">About</a><a href="{% url 'contact' %}">Contact</a></div><small>© {% now "Y" %} SCS Gyan. All rights reserved.</small></div></footer>
 <script>
   const menuButton = document.querySelector(".menu-toggle");
   const siteNav = document.querySelector("#main-nav");
