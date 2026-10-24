@@ -28,7 +28,7 @@ class CourseAdmin(admin.ModelAdmin):
     change_list_template = "admin/courses/course/change_list.html"
     list_display = ("title", "category", "mode", "price", "is_published", "created_at")
     list_filter = ("is_published", "mode", "category")
-    search_fields = ("title", "summary", "seo_title", "seo_description")
+    search_fields = ("title", "summary", "instructor_name", "seo_title", "seo_description")
     prepopulated_fields = {"slug": ("title",)}
     list_editable = ("is_published",)
     inlines = [ChapterInline]

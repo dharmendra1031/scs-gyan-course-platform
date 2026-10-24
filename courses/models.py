@@ -30,6 +30,8 @@ class Course(models.Model):
     seo_title = models.CharField(max_length=160, blank=True)
     seo_description = models.CharField(max_length=320, blank=True)
     description = models.TextField()
+    instructor_name = models.CharField(max_length=160, blank=True)
+    learning_outcomes = models.TextField(blank=True, help_text="One outcome per line")
     thumbnail = models.ImageField(upload_to="courses/", blank=True)
     mode = models.CharField(max_length=12, choices=Mode.choices, default=Mode.RECORDED)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])

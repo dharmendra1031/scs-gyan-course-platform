@@ -4,5 +4,5 @@
       {% if course.thumbnail %}<img src="{{ course.thumbnail.url }}" alt="" loading="lazy">{% else %}<span class="cover-decoration" aria-hidden="true">✦</span><span>LEARN WITH SCS GYAN</span>{% endif %}
     </div>
   </a>
-  <div class="course-body"><span class="eyebrow">{{ course.category.name }} · {{ course.get_mode_display }}</span><h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3><p>{{ course.summary }}</p><div class="course-bottom"><strong>₹{{ course.price|floatformat:0 }}</strong><a href="{{ course.get_absolute_url }}">View Course <span aria-hidden="true">→</span></a></div></div>
+  <div class="course-body"><span class="eyebrow">{{ course.category.name }} · {{ course.get_mode_display }}</span><h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3><p>{{ course.summary }}</p><div class="course-bottom"><strong>{% if course.price == 0 %}Free{% else %}₹{{ course.price|floatformat:0 }}{% endif %}</strong><a href="{{ course.get_absolute_url }}">View Course <span aria-hidden="true">→</span></a></div></div>
 </article>

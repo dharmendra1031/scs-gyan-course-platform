@@ -48,7 +48,12 @@ class CourseDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["chapters"] = Chapter.objects.filter(course=self.object).prefetch_related("lessons")
+        context["chapters"] = Chapter.objects.filter(course=self.object).prefetch_related(
+            Prefetch("lessons", queryset=Lesson.objects.filter(is_published=True))
+        )
+        context["outcomes"] = [
+            item.strip() for item in self.object.learning_outcomes.splitlines() if item.strip()
+        ]
         if self.request.user.is_authenticated:
             context["is_enrolled"] = Enrollment.objects.filter(
                 course=self.object, student=self.request.user, is_active=True
