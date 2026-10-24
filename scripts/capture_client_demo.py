@@ -20,7 +20,7 @@ from playwright.sync_api import sync_playwright
 BASE_URL = "http://127.0.0.1:8000"
 OUTPUT = Path(__file__).resolve().parents[1] / "client-review"
 PAGES = [
-    ("home", "/", "Build knowledge."),
+    ("home", "/", "Prepare with purpose."),
     ("courses", "/courses/", "Explore Courses"),
     ("course-detail", "/courses/upsc-foundation-course/", "UPSC Foundation Course"),
     ("articles", "/articles/", "Current Affairs & Articles"),
