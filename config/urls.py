@@ -8,6 +8,7 @@ urlpatterns = [
     path("account/", include("accounts.urls")),
     path("courses/", include("courses.urls")),
     path("assessments/", include("exams.urls")),
+    path("articles/", include("articles.urls")),
     path("", include("pages.urls")),
 ]
 

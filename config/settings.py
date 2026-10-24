@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "accounts",
     "courses",
     "exams",
+    "articles",
     "pages",
 ]
 
