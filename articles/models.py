@@ -13,6 +13,8 @@ class Article(models.Model):
     slug = models.SlugField(max_length=230, unique=True)
     section = models.CharField(max_length=20, choices=Section.choices, default=Section.CURRENT_AFFAIRS)
     summary = models.CharField(max_length=350)
+    seo_title = models.CharField(max_length=160, blank=True)
+    seo_description = models.CharField(max_length=320, blank=True)
     content = models.TextField()
     published_at = models.DateTimeField(default=timezone.now)
     is_published = models.BooleanField(default=False)

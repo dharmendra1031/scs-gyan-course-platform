@@ -27,6 +27,8 @@ class Course(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True)
     summary = models.CharField(max_length=320)
+    seo_title = models.CharField(max_length=160, blank=True)
+    seo_description = models.CharField(max_length=320, blank=True)
     description = models.TextField()
     thumbnail = models.ImageField(upload_to="courses/", blank=True)
     mode = models.CharField(max_length=12, choices=Mode.choices, default=Mode.RECORDED)

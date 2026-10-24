@@ -4,7 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="SCS Gyan — courses, study material and preparation resources.">
+  <meta name="description" content="{% block meta_description %}SCS Gyan — courses, study material and preparation resources.{% endblock %}">
+  <link rel="canonical" href="{{ canonical_url }}">
+  {% block robots_meta %}{% endblock %}
   <title>{% block title %}SCS Gyan{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
 </head>

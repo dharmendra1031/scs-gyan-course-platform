@@ -7,6 +7,6 @@ from .models import Article
 class ArticleAdmin(admin.ModelAdmin):
     list_display = ("title", "section", "is_published", "published_at")
     list_filter = ("section", "is_published")
-    search_fields = ("title", "summary", "content")
+    search_fields = ("title", "summary", "content", "seo_title")
     prepopulated_fields = {"slug": ("title",)}
     list_editable = ("is_published",)
