@@ -17,6 +17,10 @@ def available_assessment(request, assessment_id):
     get_object_or_404(
         Enrollment, student=request.user, course=assessment.course, is_active=True,
     )
+    if assessment.kind == Assessment.Kind.DAILY and (
+        not assessment.daily_date or assessment.daily_date > timezone.localdate()
+    ):
+        raise Http404("Quiz is not available yet.")
     return assessment
 
 
@@ -31,6 +35,22 @@ def valid_questions(assessment):
     ):
         raise Http404("This test is not ready.")
     return questions
+
+
+@login_required
+@never_cache
+def daily_quizzes(request):
+    quizzes = (
+        Assessment.objects.filter(
+            kind=Assessment.Kind.DAILY, is_published=True,
+            course__is_published=True, daily_date__lte=timezone.localdate(),
+            course__enrollments__student=request.user,
+            course__enrollments__is_active=True,
+        )
+        .select_related("course")
+        .order_by("-daily_date", "-id")
+    )
+    return render(request, "exams/daily.html", {"quizzes": quizzes})
 
 
 @login_required
@@ -93,4 +113,27 @@ def assessment_result(request, attempt_id):
     get_object_or_404(
         Enrollment, student=request.user, course=attempt.assessment.course, is_active=True,
     )
-    return render(request, "exams/result.html", {"attempt": attempt})
+    questions = (
+        Question.objects.filter(assessment=attempt.assessment)
+        .prefetch_related("choices")
+    )
+    selected = dict(attempt.answers.values_list("question_id", "choice_id"))
+    review = []
+    for question in questions:
+        choices = list(question.choices.all())
+        chosen = next((choice for choice in choices if choice.pk == selected.get(question.pk)), None)
+        correct = next((choice for choice in choices if choice.is_correct), None)
+        review.append({"question": question, "selected": chosen, "correct": correct})
+
+    higher_scores = Attempt.objects.filter(
+        assessment=attempt.assessment, submitted_at__isnull=False,
+        total_marks=attempt.total_marks, score__gt=attempt.score,
+    ).count()
+    participants = Attempt.objects.filter(
+        assessment=attempt.assessment, submitted_at__isnull=False,
+        total_marks=attempt.total_marks,
+    ).count()
+    return render(request, "exams/result.html", {
+        "attempt": attempt, "review": review, "rank": higher_scores + 1,
+        "participants": participants,
+    })

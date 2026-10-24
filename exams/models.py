@@ -9,10 +9,12 @@ class Assessment(models.Model):
     class Kind(models.TextChoices):
         QUIZ = "quiz", "Quiz"
         TEST = "test", "Test Series"
+        DAILY = "daily", "Daily Quiz"
 
     course = models.ForeignKey("courses.Course", on_delete=models.PROTECT, related_name="assessments")
     title = models.CharField(max_length=180)
-    kind = models.CharField(max_length=4, choices=Kind.choices, default=Kind.QUIZ)
+    kind = models.CharField(max_length=5, choices=Kind.choices, default=Kind.QUIZ)
+    daily_date = models.DateField(blank=True, null=True)
     duration_minutes = models.PositiveSmallIntegerField(default=30)
     is_published = models.BooleanField(default=False)
 
@@ -28,6 +30,7 @@ class Question(models.Model):
     text = models.TextField()
     position = models.PositiveIntegerField(default=0)
     marks = models.PositiveSmallIntegerField(default=1)
+    explanation = models.TextField(blank=True)
 
     class Meta:
         ordering = ["position", "id"]

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Daily Quiz | SCS Gyan{% endblock %}
+{% block content %}
+<section class="page-banner"><div class="container"><span class="eyebrow accent">PRACTICE EVERY DAY</span>
+  <h1>Daily Quiz</h1><p>Quizzes available for your enrolled courses.</p>
+</div></section>
+<section class="section"><div class="container">
+  <div class="card-grid">
+    {% for quiz in quizzes %}
+      <article class="details-panel">
+        <span class="eyebrow accent">{{ quiz.daily_date|date:"d M Y" }} · {{ quiz.course.title }}</span>
+        <h2>{{ quiz.title }}</h2>
+        <p>{{ quiz.duration_minutes }} minutes</p>
+        <a href="{% url 'exam_take' quiz.id %}" class="text-link">Open Quiz →</a>
+      </article>
+    {% empty %}
+      <p>No daily quizzes are available for your enrolled courses yet.</p>
+    {% endfor %}
+  </div>
+</div></section>
+{% endblock %}

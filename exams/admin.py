@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 from django.forms.models import BaseInlineFormSet
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Max
 from django.template.response import TemplateResponse
 from django.urls import path
 
@@ -21,6 +21,8 @@ class AssessmentForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
+        if cleaned.get("kind") == Assessment.Kind.DAILY and not cleaned.get("daily_date"):
+            raise forms.ValidationError("Daily quizzes require a date.")
         if cleaned.get("is_published") and (
             not self.instance.pk or not self.instance.questions.exists()
         ):
@@ -31,7 +33,7 @@ class AssessmentForm(forms.ModelForm):
 @admin.register(Assessment)
 class AssessmentAdmin(admin.ModelAdmin):
     form = AssessmentForm
-    list_display = ("title", "course", "kind", "duration_minutes", "is_published")
+    list_display = ("title", "course", "kind", "daily_date", "duration_minutes", "is_published")
     list_filter = ("kind", "is_published", "course")
     search_fields = ("title", "course__title")
 
@@ -99,7 +101,7 @@ class AttemptAdmin(admin.ModelAdmin):
         summary = (
             Attempt.objects.filter(submitted_at__isnull=False)
             .values("assessment__title", "assessment__course__title")
-            .annotate(students=Count("id"), average_score=Avg("score"))
+            .annotate(students=Count("id"), average_score=Avg("score"), highest_score=Max("score"))
             .order_by("assessment__course__title", "assessment__title")
         )
         return TemplateResponse(request, "admin/exams/attempt/performance.html", {
