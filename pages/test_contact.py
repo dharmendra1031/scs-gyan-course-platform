@@ -18,10 +18,10 @@ class ContactEnquiryTests(TestCase):
     def test_enquiry_is_saved_and_redirected(self):
         url = reverse("contact")
         self.assertContains(self.client.get(url), "Send Enquiry")
-        response = self.client.post(url, self.valid_data())
-        self.assertRedirects(response, url)
+        response = self.client.post(url, self.valid_data(), follow=True)
+        self.assertEqual(response.redirect_chain, [(url, 302)])
         self.assertEqual(ContactEnquiry.objects.count(), 1)
-        self.assertContains(self.client.get(url), "Your enquiry has been received.")
+        self.assertContains(response, "Your enquiry has been received.")
 
     def test_invalid_email_and_short_message_cannot_submit(self):
         payload = self.valid_data()
