@@ -97,6 +97,18 @@ overflow and uploads an offline screenshot gallery as a GitHub Actions artifact.
 The review uses fictional demo courses on disposable SQLite and does not
 deploy a publicly accessible staging environment.
 
+## Phase 9 — Staging package
+
+GitHub Actions **Staging Release Package** creates an archived Django/Waitress
+release (source code, collected static assets, file checksum manifest).
+The workflow also starts the extracted ZIP locally and checks its public
+routes. See [Staging Deployment](docs/staging-deployment.md) for Windows IIS,
+ODBC 18, SQL Server, configuration and HTTPS instructions.
+
+The package contains no database, secret `.env`, private student PDF or
+customer content. Production hosting, real TLS and SQL Server integration
+on the target environment remain separate acceptance steps.
+
 ## Important
 
 Do not commit `.env`, SQL connection strings, payment secrets or licensed course assets. Public repositories expose their entire committed history. Require pull-request reviews and passing CI checks before merging to `main`.

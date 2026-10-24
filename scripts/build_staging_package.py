@@ -8,7 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DIRS = ("accounts", "articles", "config", "courses", "exams", "pages",
         "templates", "static", "staticfiles")
-FILES = ("manage.py", "requirements.txt", ".env.example", "scripts/staging_smoke.py")
+FILES = (
+    "manage.py", "requirements.txt", ".env.example", ".env.staging.example",
+    "scripts/staging_smoke.py", "scripts/staging_preflight.py",
+    "scripts/start_staging.ps1", "docs/staging-deployment.md",
+)
 SKIP_DIRS = {"__pycache__", "fixtures", ".pytest_cache", ".venv", "venv"}
 SKIP_FILES = {"tests.py", ".env", "db.sqlite3"}
 
@@ -55,8 +59,13 @@ def main():
         zipped.writestr("RELEASE-MANIFEST.json", json.dumps(manifest, indent=2))
     with zipfile.ZipFile(archive) as zipped:
         names = set(zipped.namelist())
-        required = {"manage.py", "requirements.txt", ".env.example",
-                    "config/wsgi.py", "scripts/staging_smoke.py", "RELEASE-MANIFEST.json"}
+        required = {
+            "manage.py", "requirements.txt", ".env.example",
+            ".env.staging.example", "config/wsgi.py",
+            "scripts/staging_smoke.py", "scripts/staging_preflight.py",
+            "scripts/start_staging.ps1", "docs/staging-deployment.md",
+            "RELEASE-MANIFEST.json",
+        }
         if not required.issubset(names):
             raise AssertionError(f"Missing release files: {required - names}")
         if any(name.endswith("/.env") or "private_media/" in name
