@@ -4,6 +4,8 @@ Uses disposable SQLite/demo content only; never starts a public staging server.
 """
 import html
 import json
+import os
+import secrets
 import time
 from pathlib import Path
 from urllib.error import URLError
@@ -38,9 +40,44 @@ def await_server():
     raise RuntimeError("Local Django demo server did not become available.")
 
 
+def seed_student_demo():
+    """Create fictional learning records in the disposable CI database."""
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    import django
+    django.setup()
+
+    from django.contrib.auth import get_user_model
+    from courses.models import Course, Chapter, Lesson, Enrollment, LessonProgress
+
+    course = Course.objects.get(slug="upsc-foundation-course")
+    chapter = Chapter.objects.create(
+        course=course, title="Demo Learning Chapter", position=1,
+    )
+    completed = Lesson.objects.create(
+        chapter=chapter, title="Introduction to the syllabus",
+        position=1, is_published=True,
+    )
+    upcoming = Lesson.objects.create(
+        chapter=chapter, title="Understanding exam patterns",
+        position=2, is_published=True,
+    )
+    password = secrets.token_urlsafe(24)
+    user = get_user_model().objects.create_user(
+        username="disposable-demo-student",
+        email="disposable-demo@example.invalid",
+        password=password,
+        first_name="Demo Student",
+    )
+    enrollment = Enrollment.objects.create(student=user, course=course)
+    LessonProgress.objects.create(enrollment=enrollment, lesson=completed)
+    return {"username": user.username, "password": password,
+            "course": course.slug, "lesson_id": upcoming.pk}
+
+
 def capture():
     OUTPUT.mkdir(parents=True, exist_ok=True)
     await_server()
+    student = seed_student_demo()
     shots = []
     failures = []
     with sync_playwright() as playwright:
@@ -96,6 +133,32 @@ def capture():
                             if box and (box["x"] < -2 or box["x"] + box["width"] > width + 2):
                                 failures.append(f"{path} at {width}px: navigation link clipped")
                                 break
+                    if label in ("mobile", "desktop"):
+                        page.goto(BASE_URL + "/account/login/", wait_until="networkidle")
+                        page.locator('input[name="username"]').fill(student["username"])
+                        page.locator('input[name="password"]').fill(student["password"])
+                        page.locator('button[type="submit"]').click()
+                        page.wait_for_url("**/account/dashboard/")
+                        learner_pages = [
+                            ("student-dashboard", "/account/dashboard/", "My Courses"),
+                            ("student-learning", f'/courses/{student["course"]}/learn/',
+                             "Continue: Understanding exam patterns"),
+                            ("student-lesson", f'/courses/lessons/{student["lesson_id"]}/',
+                             "Learning resources"),
+                        ]
+                        for name, path, heading in learner_pages:
+                            response = page.goto(BASE_URL + path, wait_until="networkidle")
+                            filename = f"{name}-{label}.png"
+                            page.screenshot(path=str(OUTPUT / filename), full_page=True)
+                            shots.append((name, label, filename))
+                            if response is None or response.status != 200:
+                                failures.append(f"{path} at {width}px did not return HTTP 200")
+                            if heading.lower() not in page.locator("body").inner_text().lower():
+                                failures.append(f"Student {path} at {width}px missing expected text")
+                            if page.evaluate(
+                                "document.documentElement.scrollWidth > window.innerWidth + 2"
+                            ):
+                                failures.append(f"Student {path} at {width}px overflows horizontally")
                 finally:
                     page.close()
         finally:
