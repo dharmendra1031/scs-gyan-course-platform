@@ -42,6 +42,23 @@ class MobileUiTests(StaticLiveServerTestCase):
             finally:
                 browser.close()
 
+    def test_desktop_navigation_has_no_duplicate_menu_button(self):
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 800})
+                page.goto(self.live_server_url + "/")
+                assert not page.get_by_role("button", name="Menu").is_visible()
+                navigation = page.get_by_role("navigation", name="Main navigation")
+                assert navigation.get_by_role("link", name="Courses").is_visible()
+                assert page.evaluate(
+                    "document.documentElement.scrollWidth <= window.innerWidth + 2"
+                )
+            finally:
+                browser.close()
+
     def test_contact_form_mobile_validation_and_submit(self):
         from playwright.sync_api import sync_playwright
 

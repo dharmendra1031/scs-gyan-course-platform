@@ -161,7 +161,7 @@ img {
     transition:background .2s,transform .2s
 }
 
-.menu-toggle {
+.button.menu-toggle {
     display:none
 }
 
@@ -744,7 +744,7 @@ img {
         margin-left:0;
         justify-content:center
     }
-    .menu-toggle {
+    .button.menu-toggle {
         display:inline-flex;
         margin-left:auto
     }
