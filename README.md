@@ -64,10 +64,14 @@ tests on each push to `development` and pull request to `main`.
 - Quiz, Test Series and enrolled-student Daily Quiz with server-side scoring,
   answer explanations, private results and personal rank
 - Current Affairs, Editorial and Blog with publish scheduling, search and filters
+- Admin-managed course PDF study materials served from private storage to enrolled students
+- Student test history with private result links and pagination
+- Superuser-only course reports with enrollments, lessons, PDF counts, pending orders and verified gateway order value
 - Numeric auto-increment IDs (BigAutoField) for application models
 
 See [Content and Exams](docs/content-and-exams.md) for publishing and student
-access rules.
+access rules. See [Study Materials and Reports](docs/study-materials-and-reports.md)
+for new features and deployment notes.
 
 ## Payment setup
 
