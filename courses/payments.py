@@ -11,6 +11,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from .models import Enrollment, Order
+from accounts.notifications import notify
 
 
 class PaymentError(Exception):
@@ -108,5 +109,10 @@ def confirm_gateway_payment(order_id, gateway_order_id, payment):
     order.save(update_fields=["gateway_payment_id", "verified_at", "status", "updated_at"])
     enrollment, _ = Enrollment.objects.update_or_create(
         student=order.student, course=order.course, defaults={"is_active": True},
+    )
+    notify(
+        order.student, f"payment-{order.pk}", "Payment confirmed",
+        f"Access to {order.course.title} is active.",
+        url_name="course_learn", args=[order.course.slug],
     )
     return enrollment

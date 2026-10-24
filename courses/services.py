@@ -1,6 +1,7 @@
 from django.db import transaction
 
 from .models import Enrollment, Order
+from accounts.notifications import notify
 
 
 @transaction.atomic
@@ -21,4 +22,9 @@ def approve_order(order_id):
     if order.status != Order.Status.PAID:
         order.status = Order.Status.PAID
         order.save(update_fields=["status", "updated_at"])
+        notify(
+            order.student, f"manual-order-{order.pk}", "Course access approved",
+            f"Your enrollment in {order.course.title} has been approved.",
+            url_name="course_learn", args=[order.course.slug],
+        )
     return enrollment

@@ -182,3 +182,43 @@ class StudentBrowserTests(StaticLiveServerTestCase):
                 assert "60%" in page.locator("body").inner_text()
             finally:
                 browser.close()
+
+    def test_completion_certificate_and_notification_on_mobile(self):
+        from playwright.sync_api import sync_playwright
+        from courses.models import Chapter, Lesson
+
+        category = Category.objects.create(name="Certificate Browser", slug="certificate-browser")
+        course = Course.objects.create(
+            category=category, title="Certificate Browser Course",
+            slug="certificate-browser-course", summary="Earn a certificate",
+            description="Finish the lesson", price=Decimal("0.00"),
+            is_published=True,
+        )
+        chapter = Chapter.objects.create(course=course, title="First")
+        Lesson.objects.create(
+            chapter=chapter, title="Certificate Lesson", is_published=True,
+        )
+        get_user_model().objects.create_user(
+            username="browsergraduate", email="browsergraduate@example.com",
+            password="BrowserPass123!",
+        )
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.goto(self.live_server_url + "/account/login/")
+                page.locator('input[name="username"]').fill("browsergraduate")
+                page.locator('input[name="password"]').fill("BrowserPass123!")
+                page.locator('button[type="submit"]').click()
+                page.wait_for_url("**/account/dashboard/")
+                page.goto(self.live_server_url + "/courses/certificate-browser-course/")
+                page.get_by_role("button", name="Enroll for free").click()
+                page.wait_for_url("**/courses/certificate-browser-course/learn/")
+                page.get_by_role("link", name="Certificate Lesson").click()
+                page.get_by_role("button", name="Mark as completed").click()
+                page.wait_for_url("**/courses/certificate-browser-course/learn/")
+                assert page.get_by_role("link", name="Download Certificate").count() == 1
+                page.goto(self.live_server_url + "/account/notifications/")
+                assert "Course completed" in page.locator("body").inner_text()
+            finally:
+                browser.close()
