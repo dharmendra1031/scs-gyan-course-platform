@@ -47,13 +47,17 @@ def check(base_url, allow_http=False):
             canonical = f'href="{origin}{path}"'.encode()
             if canonical not in body:
                 issues.append(f"{path}: canonical scheme or host mismatch.")
+    # Verify the database-backed readiness endpoint separately from HTML pages.
+    status, _, body = request_page(opener, urljoin(origin, "/health/"))
+    if status != 200 or b'"status": "ok"' not in body:
+        issues.append(f"/health/: database readiness failed (HTTP {status}).")
     path = "/account/dashboard/"
     status, headers, _ = request_page(opener, urljoin(origin, path))
     if status != 302 or urlsplit(headers.get("Location", "")).path != "/account/login/":
         issues.append(f"{path}: expected 302 to login, got HTTP {status}.")
     if issues:
         raise AssertionError("\n".join(issues))
-    print(f"PASS: {len(PUBLIC_PATHS)} public routes and private-dashboard redirect at {origin}")
+    print(f"PASS: {len(PUBLIC_PATHS)} public routes, database health, and private-dashboard redirect at {origin}")
 
 
 def main():
