@@ -61,7 +61,13 @@ tests on each push to `development` and pull request to `main`.
 - Free enrollment, pending paid orders, student lesson progress, protected PDF notes
 - Optional Razorpay checkout with server-side signature verification, payment capture
   validation, idempotent webhooks, and superuser-only manual approval
+- Quiz, Test Series and enrolled-student Daily Quiz with server-side scoring,
+  answer explanations, private results and personal rank
+- Current Affairs, Editorial and Blog with publish scheduling, search and filters
 - Numeric auto-increment IDs (BigAutoField) for application models
+
+See [Content and Exams](docs/content-and-exams.md) for publishing and student
+access rules.
 
 ## Payment setup
 
@@ -74,8 +80,9 @@ handling or production deployment has been verified.
 
 - Razorpay test-mode acceptance with actual provider API/webhooks
 - Production database and storage verification; receipts/refunds and dispute processes
-- UI/UX acceptance, quizzes/test series, articles/current affairs, SEO, reports,
-  bookstore/DLP workflows, deployment and real production security review
+- Client content, advanced test analytics and configurable retakes
+- SEO editor, certificates, bookstore/DLP workflows and production reporting
+- UI/UX acceptance, deployment and real production security review
 
 ## Important
 
