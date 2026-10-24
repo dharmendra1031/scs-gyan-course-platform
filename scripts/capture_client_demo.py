@@ -61,6 +61,21 @@ def capture():
                         shot_name = f"{name}-{label}.png"
                         page.screenshot(path=str(OUTPUT / shot_name), full_page=True)
                         shots.append((name, label, shot_name))
+                        if name == "home" and label in ("mobile", "small-mobile"):
+                            toggle = page.get_by_role("button", name="Menu")
+                            toggle.click()
+                            menu_name = f"home-menu-{label}.png"
+                            page.screenshot(path=str(OUTPUT / menu_name), full_page=True)
+                            shots.append(("home-menu", label, menu_name))
+                            if toggle.get_attribute("aria-expanded") != "true":
+                                failures.append(f"Menu did not open at {width}px")
+                            dimensions_open = page.evaluate(
+                                "() => ({ documentWidth: document.documentElement.scrollWidth,"
+                                " viewport: window.innerWidth })"
+                            )
+                            if dimensions_open["documentWidth"] > dimensions_open["viewport"] + 2:
+                                failures.append(f"Expanded menu overflows at {width}px")
+                            toggle.click()
                         if response is None or response.status != 200:
                             failures.append(f"{path} at {width}px did not return HTTP 200")
                             continue
