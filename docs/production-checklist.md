@@ -56,7 +56,9 @@ robots.txt, so authorization remains mandatory.
 ## Outstanding acceptance
 
 - Real Razorpay sandbox test with provider callbacks and test webhooks
-- Refund, reversal/chargeback handling and financial reconciliation
+- Live refund/chargeback lifecycle, provider webhook/event handling, settlement
+  ledger, GST invoice and accounting reconciliation (read-only refund snapshot
+  reconciliation is implemented, but not sufficient for launch)
 - Actual client domain, HTTPS certificates, IIS/proxy setup, SQL backup/restore
 - File content inspection, malware scanning and storage provider authorization
 - Video streaming DRM if contractually required; external links are not DRM

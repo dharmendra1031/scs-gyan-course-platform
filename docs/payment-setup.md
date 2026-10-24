@@ -38,8 +38,33 @@ transactions**. Use Razorpay's official test mode before going live.
   Neither document is a GST tax invoice.
 - Old cancelled orders with a gateway reference cannot be silently reused at a
   new course price; ask support to reconcile or refund the original attempt.
-- Payment refunds, partial refunds and tax invoices are not implemented.
-  Reconciliation and real Razorpay sandbox tests are still required.
+- Read-only refund reconciliation is available to superusers through
+  **Django Admin → Orders → Reconcile refunds from Razorpay**. This makes a
+  `GET /v1/payments/{payment_id}` request and checks the provider's reported
+  `amount_refunded`, original amount, payment/order IDs and currency.
+- Partial refunds are recorded without revoking course access. A fully
+  recorded refund revokes enrollment; re-running reconciliation does not
+  duplicate notifications. Recorded refunds never decrease on stale responses.
+- Reconciliation **does not initiate a refund**, make a bank transfer, handle
+  chargebacks, or certify settlement. For now, initiate refunds only through
+  the client's authorized Razorpay Dashboard process and reconcile afterward.
+  Real Razorpay test-mode validation, fees, taxes and official invoices are
+  still pending.
 - Lesson video links require an active enrollment before redirecting to the
   external video provider. This is not DRM: an externally shared provider URL
   might still work independently of SCS Gyan.
+
+## Phase 7 acceptance
+
+Before live money handling, the client must confirm refund eligibility, terms,
+who may initiate a refund in Razorpay, and the expected access policy on
+partial versus full refunds. Test with Razorpay's test-mode payments and
+refunds, including delayed/refused webhook events and manual refunds.
+
+**Razorpay credentials must not be pasted into chat or committed to the
+public repository.** Store them as deployment secrets.
+
+Reconciled totals are point-in-time snapshots: without a real scheduler or
+refund webhook they can become stale. The Admin course report deducts only
+refunds that have been reconciled in the platform. It is not an accounting
+ledger, GST invoice or bank settlement reconciliation.

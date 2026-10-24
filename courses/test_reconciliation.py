@@ -79,6 +79,9 @@ class RefundReconciliationTests(TestCase):
         self.assertEqual(order.refunded_amount, order.amount)
         self.enrollment.refresh_from_db()
         self.assertFalse(self.enrollment.is_active)
+        from .services import approve_order
+        with self.assertRaises(ValueError):
+            approve_order(order.pk)
         self.assertEqual(
             StudentNotification.objects.filter(
                 student=self.student, event_key=f"full-refund-{order.pk}",

@@ -10,6 +10,8 @@ def approve_order(order_id):
     order = Order.objects.select_for_update().get(pk=order_id)
     if order.status == Order.Status.CANCELLED:
         raise ValueError("Cancelled orders cannot be approved.")
+    if order.fully_refunded:
+        raise ValueError("Fully refunded orders cannot be reactivated.")
 
     enrollment, _ = Enrollment.objects.get_or_create(
         student=order.student,

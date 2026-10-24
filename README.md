@@ -67,6 +67,7 @@ tests on each push to `development` and pull request to `main`.
 - Admin-managed course PDF study materials served from private storage to enrolled students
 - Student test history with private result links and pagination
 - Superuser-only course reports with enrollments, lessons, PDF counts, pending orders and verified gateway order value
+- Read-only Razorpay refund reconciliation with partial/full refund tracking and net recorded value
 - Numeric auto-increment IDs (BigAutoField) for application models
 
 See [Content and Exams](docs/content-and-exams.md) for publishing and student
@@ -82,8 +83,8 @@ handling or production deployment has been verified.
 
 ## Remaining
 
-- Razorpay test-mode acceptance with actual provider API/webhooks
-- Production database and storage verification; receipts/refunds and dispute processes
+- Razorpay test-mode acceptance with actual provider API/webhooks and refund lifecycle
+- Production database and storage verification; tax invoices and dispute processes
 - Client content, advanced test analytics and configurable retakes
 - SEO editor, certificates, bookstore/DLP workflows and production reporting
 - UI/UX acceptance, deployment and real production security review
