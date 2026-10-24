@@ -1,0 +1,43 @@
+name: Client Demo Review
+
+on:
+  push:
+    branches: [development]
+  workflow_dispatch:
+
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      DEBUG: "True"
+      DB_ENGINE: sqlite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install Django and Chromium
+        run: |
+          pip install -r requirements.txt
+          pip install 'playwright>=1.55,<2'
+          python -m playwright install --with-deps chromium
+      - name: Set up disposable demonstration database
+        run: |
+          python manage.py migrate --noinput
+          python manage.py loaddata demo_courses
+      - name: Start local-only demo
+        run: |
+          python manage.py runserver 127.0.0.1:8000 --noreload > /tmp/scs-gyan-demo.log 2>&1 &
+      - name: Capture client screenshots and validate responsive pages
+        run: python scripts/capture_client_demo.py
+      - name: Upload offline UI review package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scs-gyan-client-ui-review
+          path: client-review/
+          if-no-files-found: warn
+          retention-days: 14

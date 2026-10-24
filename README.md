@@ -89,6 +89,14 @@ handling or production deployment has been verified.
 - SEO editor, certificates, bookstore/DLP workflows and production reporting
 - UI/UX acceptance, deployment and real production security review
 
+## Client demo screenshots
+
+A [Client Demo Review](docs/client-demo-review.md) workflow renders the running
+Django site in Chromium at desktop/tablet/mobile sizes, checks horizontal
+overflow and uploads an offline screenshot gallery as a GitHub Actions artifact.
+The review uses fictional demo courses on disposable SQLite and does not
+deploy a publicly accessible staging environment.
+
 ## Important
 
 Do not commit `.env`, SQL connection strings, payment secrets or licensed course assets. Public repositories expose their entire committed history. Require pull-request reviews and passing CI checks before merging to `main`.
