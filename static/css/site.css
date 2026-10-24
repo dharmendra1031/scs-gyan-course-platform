@@ -793,6 +793,137 @@ img {
     max-width:850px
 }
 
+
+.auth-section {
+    background:linear-gradient(120deg,#f7faf7,#eef5ef)
+}
+.auth-layout {
+    display:grid;
+    grid-template-columns:.9fr 1fr;
+    max-width:970px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 22px 58px #123b2920
+}
+.auth-intro {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    background:radial-gradient(circle at 0 100%,#18836b,#0b604b 65%,#084b3d);
+    padding:54px 45px;
+    color:#fff;
+    min-width:0
+}
+.auth-intro-kicker {
+    color:#ffdc90;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:1.15px
+}
+.auth-intro h1 {
+    color:white;
+    font-size:clamp(30px,3.1vw,43px);
+    line-height:1.2;
+    letter-spacing:-1px;
+    margin:26px 0 17px
+}
+.auth-intro p { color:#d5eae0; margin:0; max-width:370px }
+.auth-intro-bottom {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:50px;
+    color:#f9e1af;
+    font-weight:700;
+    font-size:13px
+}
+.auth-intro-bottom span { font-size:30px }
+.auth-layout .auth-card {
+    width:100%;
+    max-width:none;
+    box-shadow:none;
+    border:0;
+    border-radius:0;
+    padding:55px 50px;
+    align-self:center
+}
+.auth-layout .auth-card h1 { margin:15px 0 9px; font-size:33px }
+.auth-layout .auth-card>p { margin-top:0 }
+.auth-layout .form-fields input { border-color:#c9d9cd }
+.auth-layout .form-fields input:focus { border-color:var(--blue) }
+.course-detail-banner .eyebrow { display:block; margin-top:28px }
+.course-meta { display:flex; flex-wrap:wrap; gap:11px; margin-top:25px }
+.course-meta span {
+    display:inline-block;
+    padding:7px 14px;
+    border:1px solid #cde2d3;
+    background:#fff;
+    border-radius:30px;
+    font-size:13px;
+    color:#35604c;
+    font-weight:700
+}
+.course-overview h2 { font-size:27px; margin:26px 0 16px }
+.course-overview .prose { color:#496255 }
+.outcome-list {
+    display:grid;
+    gap:10px;
+    list-style:none;
+    padding:0
+}
+.outcome-list li {
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:12px 17px;
+    background:#f6faf6
+}
+.outcome-list li::before { content:"✓"; color:var(--blue); margin-right:12px; font-weight:800 }
+.course-syllabus { display:grid; gap:13px; margin-bottom:25px }
+.course-chapter {
+    border:1px solid var(--line);
+    border-radius:15px;
+    background:#fff;
+    padding:19px 23px
+}
+.course-chapter h3 { font-size:18px; margin:0 0 10px; color:var(--navy) }
+.course-chapter ul { margin-bottom:0; padding-left:20px }
+.course-enrollment-panel { padding:19px 19px 26px; position:sticky; top:20px }
+.detail-cover {
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:flex-end;
+    background:linear-gradient(130deg,#084b3b,#248972);
+    color:white;
+    height:185px;
+    border-radius:12px;
+    padding:24px;
+    margin-bottom:25px
+}
+.detail-cover::after {
+    content:"";
+    position:absolute;
+    width:180px;
+    height:180px;
+    right:-60px;
+    top:-80px;
+    border:1px solid #ffffff42;
+    border-radius:50%;
+    box-shadow:0 0 0 30px #ffffff0d,0 0 0 60px #ffffff0a
+}
+.detail-cover img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+.detail-cover span { position:relative; z-index:1; font-size:15px; font-weight:700 }
+.detail-cover strong { position:relative; z-index:1; font-size:26px; letter-spacing:1px }
+.course-enrollment-panel>span.eyebrow,.course-enrollment-panel>h2,.course-enrollment-panel>p,.course-enrollment-panel>form,.course-enrollment-panel>a {
+    margin-left:7px;
+    margin-right:7px
+}
+.course-enrollment-panel .button { white-space:normal }
+
 @media(max-width:980px) {
     .navigation {
         flex-wrap:wrap;
@@ -818,6 +949,12 @@ img {
 }
 
 @media(max-width:720px) {
+    .auth-layout { grid-template-columns:1fr }
+    .auth-intro { order:2; padding:27px; min-height:0 }
+    .auth-intro h1 { font-size:28px; margin:14px 0 }
+    .auth-intro-bottom { margin-top:18px }
+    .auth-layout .auth-card { order:1; padding:30px 25px }
+    .course-enrollment-panel { position:static }
     .container {
         width:min(100% - 28px,1200px)
     }
