@@ -6,6 +6,8 @@ from django.urls import path
 
 from .models import Category, Chapter, Course, Enrollment, Lesson, LessonProgress, Order, StudyMaterial
 from .services import approve_order
+from .reconciliation import reconcile_from_gateway
+from .payments import PaymentError
 
 
 @admin.register(Category)
@@ -65,7 +67,7 @@ class CourseAdmin(admin.ModelAdmin):
                 gateway_payment_id__isnull=False,
                 verified_at__isnull=False,
             ).values("course_id").annotate(
-                total=Sum("amount"), payments=Count("id"),
+                total=Sum("amount"), refunds=Sum("refunded_amount"), payments=Count("id"),
             )
         }
         rows = [{
@@ -76,6 +78,11 @@ class CourseAdmin(admin.ModelAdmin):
             "pending_orders": pending.get(course.pk, 0),
             "captured_payments": paid.get(course.pk, {}).get("payments", 0),
             "captured_value": paid.get(course.pk, {}).get("total", 0),
+            "recorded_refunds": paid.get(course.pk, {}).get("refunds", 0),
+            "net_recorded_value": (
+                paid.get(course.pk, {}).get("total", 0)
+                - paid.get(course.pk, {}).get("refunds", 0)
+            ),
         } for course in courses]
         return TemplateResponse(request, "admin/courses/course/reports.html", {
             **self.admin_site.each_context(request),
@@ -125,18 +132,41 @@ def approve_verified_payments(modeladmin, request, queryset):
     modeladmin.message_user(request, f"Approved {approved} order(s).", messages.SUCCESS)
 
 
+@admin.action(description="Reconcile refunds from Razorpay (read-only)")
+def reconcile_refunds(modeladmin, request, queryset):
+    if not request.user.is_superuser:
+        modeladmin.message_user(request, "Only superusers can reconcile refunds.", messages.ERROR)
+        return
+    reconciled = 0
+    failures = 0
+    for order in queryset:
+        try:
+            reconcile_from_gateway(order.pk)
+            reconciled += 1
+        except (ValueError, PaymentError):
+            failures += 1
+    if reconciled:
+        modeladmin.message_user(request, f"Reconciled {reconciled} gateway order(s).", messages.SUCCESS)
+    if failures:
+        modeladmin.message_user(
+            request, f"{failures} order(s) could not be reconciled; check credentials/payment references.",
+            messages.WARNING,
+        )
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("id", "student", "course", "amount", "status", "created_at")
+    list_display = ("id", "student", "course", "amount", "refunded_amount", "status", "created_at")
     list_filter = ("status",)
     search_fields = ("student__username", "student__email", "course__title")
-    readonly_fields = ("student", "course", "amount", "status", "created_at", "updated_at")
-    actions = [approve_verified_payments]
+    readonly_fields = ("student", "course", "amount", "status", "refunded_amount", "refund_checked_at", "created_at", "updated_at")
+    actions = [approve_verified_payments, reconcile_refunds]
 
     def get_actions(self, request):
         actions = super().get_actions(request)
         if not request.user.is_superuser:
             actions.pop('approve_verified_payments', None)
+            actions.pop('reconcile_refunds', None)
         return actions
 
     def has_add_permission(self, request):

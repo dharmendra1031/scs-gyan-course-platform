@@ -127,12 +127,28 @@ class Order(models.Model):
     gateway_order_id = models.CharField(max_length=70, blank=True, null=True, unique=True)
     gateway_payment_id = models.CharField(max_length=70, blank=True, null=True, unique=True)
     verified_at = models.DateTimeField(blank=True, null=True)
+    refunded_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    refund_checked_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
-        constraints = [models.UniqueConstraint(fields=["student", "course"], name="unique_student_course_order")]
+        constraints = [
+            models.UniqueConstraint(fields=["student", "course"], name="unique_student_course_order"),
+            models.CheckConstraint(condition=models.Q(refunded_amount__gte=0), name="order_refund_nonnegative"),
+            models.CheckConstraint(condition=models.Q(refunded_amount__lte=models.F("amount")), name="order_refund_lte_amount"),
+        ]
+
+    @property
+    def net_amount(self):
+        return self.amount - self.refunded_amount
+
+    @property
+    def fully_refunded(self):
+        return self.status == self.Status.PAID and self.refund_checked_at is not None and (
+            self.refunded_amount >= self.amount
+        )
 
     def __str__(self):
         return f"Order #{self.pk} - {self.course.title}"

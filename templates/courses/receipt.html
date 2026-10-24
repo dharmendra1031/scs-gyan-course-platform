@@ -13,6 +13,8 @@
 <p><strong>Order number:</strong> {{ order.id }}</p>
 <p><strong>Amount:</strong> ₹{{ order.amount }}</p>
 <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+{% if order.refunded_amount %}<p><strong>Recorded refund:</strong> ₹{{ order.refunded_amount }}</p>{% endif %}
+{% if order.fully_refunded %}<p><strong>Refund status:</strong> Fully refunded</p>{% endif %}
 {% if order.gateway_payment_id and order.verified_at %}
 <p><strong>Payment reference:</strong> {{ order.gateway_payment_id }}</p>
 <p><strong>Verified on:</strong> {{ order.verified_at|date:"d M Y, h:i A" }}</p>
