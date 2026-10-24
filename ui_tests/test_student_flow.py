@@ -72,3 +72,43 @@ class StudentBrowserTests(StaticLiveServerTestCase):
                 assert "https://example.com/private-video" not in page.content()
             finally:
                 browser.close()
+
+    def test_student_completes_quiz_on_mobile(self):
+        from playwright.sync_api import sync_playwright
+        from courses.models import Enrollment
+        from exams.models import Assessment, Choice, Question
+
+        category = Category.objects.create(name="Browser Exams", slug="browser-exams")
+        course = Course.objects.create(
+            category=category, title="Browser Test Course", slug="browser-test-course",
+            summary="Quiz practice", description="Sample test",
+            price=Decimal("0.00"), is_published=True,
+        )
+        user = get_user_model().objects.create_user(
+            username="browserexam", email="browserexam@example.com", password="BrowserPass123!"
+        )
+        Enrollment.objects.create(student=user, course=course)
+        assessment = Assessment.objects.create(
+            course=course, title="Browser MCQ Quiz", duration_minutes=30, is_published=True,
+        )
+        question = Question.objects.create(assessment=assessment, text="What is two plus two?", marks=1)
+        correct = Choice.objects.create(question=question, text="Four", is_correct=True)
+        Choice.objects.create(question=question, text="Five", is_correct=False)
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.goto(self.live_server_url + "/account/login/")
+                page.locator('input[name="username"]').fill("browserexam")
+                page.locator('input[name="password"]').fill("BrowserPass123!")
+                page.locator('button[type="submit"]').click()
+                page.wait_for_url("**/account/dashboard/")
+                page.goto(self.live_server_url + "/courses/browser-test-course/learn/")
+                page.get_by_role("link", name="Browser MCQ Quiz").click()
+                page.locator(f'input[name="question_{question.pk}"][value="{correct.pk}"]').check()
+                page.get_by_role("button", name="Submit answers").click()
+                page.wait_for_url("**/assessments/results/**")
+                assert "1 / 1 marks" in page.locator("h2").inner_text()
+            finally:
+                browser.close()
