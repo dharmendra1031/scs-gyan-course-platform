@@ -1,0 +1,56 @@
+name: Staging Release Package
+
+on:
+  push:
+    branches: [development]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    env:
+      DEBUG: "False"
+      DB_ENGINE: sqlite
+      SECRET_KEY: "ci-only-staging-smoke-secret-not-for-a-live-server-2026"
+      ALLOWED_HOSTS: "127.0.0.1,localhost"
+      SECURE_SSL_REDIRECT: "False"
+      RAZORPAY_KEY_ID: ""
+      RAZORPAY_KEY_SECRET: ""
+      RAZORPAY_WEBHOOK_SECRET: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install runtime dependencies
+        run: pip install -r requirements.txt
+      - name: Validate migrations and collect static
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python manage.py collectstatic --noinput
+      - name: Create and verify staging ZIP
+        run: python scripts/build_staging_package.py
+      - name: Start extracted release and check endpoints
+        shell: bash
+        run: |
+          mkdir /tmp/scs-release-smoke
+          unzip -q dist/scs-gyan-staging-*.zip -d /tmp/scs-release-smoke
+          cd /tmp/scs-release-smoke
+          python manage.py migrate --noinput
+          waitress-serve --listen=127.0.0.1:8765 config.wsgi:application \
+            > /tmp/scs-release-smoke.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/staging_smoke.py http://127.0.0.1:8765 --allow-http
+      - name: Upload release ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: scs-gyan-staging-release
+          path: dist/scs-gyan-staging-*.zip
+          if-no-files-found: error
+          retention-days: 14
