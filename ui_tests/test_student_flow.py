@@ -91,7 +91,7 @@ class StudentBrowserTests(StaticLiveServerTestCase):
         assessment = Assessment.objects.create(
             course=course, title="Browser MCQ Quiz", duration_minutes=30, is_published=True,
         )
-        question = Question.objects.create(assessment=assessment, text="What is two plus two?", marks=1)
+        question = Question.objects.create(assessment=assessment, text="What is two plus two?", marks=1, explanation="Two plus two equals four.")
         correct = Choice.objects.create(question=question, text="Four", is_correct=True)
         Choice.objects.create(question=question, text="Five", is_correct=False)
 
@@ -109,6 +109,34 @@ class StudentBrowserTests(StaticLiveServerTestCase):
                 page.locator(f'input[name="question_{question.pk}"][value="{correct.pk}"]').check()
                 page.get_by_role("button", name="Submit answers").click()
                 page.wait_for_url("**/assessments/results/**")
-                assert "1 / 1 marks" in page.locator("h2").inner_text()
+                assert "1 / 1 marks" in page.locator("h2").first.inner_text()
+                assert "Two plus two equals four." in page.locator("body").inner_text()
+            finally:
+                browser.close()
+
+    def test_current_affairs_on_mobile(self):
+        from playwright.sync_api import sync_playwright
+        from articles.models import Article
+
+        Article.objects.create(
+            title="Latest current affairs", slug="latest-current-affairs",
+            summary="A published article", content="Editorial study material",
+            is_published=True,
+        )
+        Article.objects.create(
+            title="Secret draft", slug="secret-draft",
+            summary="Not published", content="Private material",
+            is_published=False,
+        )
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.goto(self.live_server_url + "/articles/")
+                assert "Latest current affairs" in page.locator("body").inner_text()
+                assert "Secret draft" not in page.locator("body").inner_text()
+                page.get_by_role("link", name="Read article").click()
+                page.wait_for_url("**/articles/latest-current-affairs/")
+                assert "Editorial study material" in page.locator("body").inner_text()
             finally:
                 browser.close()

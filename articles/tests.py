@@ -27,7 +27,7 @@ class ArticleTests(TestCase):
 
     def test_only_published_articles_are_visible(self):
         response = self.client.get(reverse("article_list"))
-        self.assertContains(response, "Today's current affairs")
+        self.assertContains(response, "Today&#x27;s current affairs")
         self.assertNotContains(response, "Draft article")
         self.assertNotContains(response, "Future article")
         self.assertContains(self.client.get(self.published.get_absolute_url()), "Learning details")
@@ -40,7 +40,7 @@ class ArticleTests(TestCase):
 
     def test_search_and_section_filter(self):
         response = self.client.get(reverse("article_list"), {"q": "Today's", "section": "current_affairs"})
-        self.assertContains(response, "Today's current affairs")
+        self.assertContains(response, "Today&#x27;s current affairs")
         self.assertEqual(len(response.context["articles"]), 1)
         response = self.client.get(reverse("article_list"), {"section": "blog"})
-        self.assertNotContains(response, "Today's current affairs")
+        self.assertNotContains(response, "Today&#x27;s current affairs")

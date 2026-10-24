@@ -142,3 +142,55 @@ class AssessmentTests(TestCase):
         )
         self.client.force_login(admin)
         self.assertContains(self.client.get(url), "Student performance")
+
+    def test_daily_quiz_hides_future_date_and_requires_enrollment(self):
+        daily = Assessment.objects.create(
+            course=self.course, title="Current Affairs Daily Quiz",
+            kind=Assessment.Kind.DAILY, daily_date=timezone.localdate() + timedelta(days=1),
+            is_published=True,
+        )
+        question = Question.objects.create(assessment=daily, text="Current affairs question")
+        Choice.objects.create(question=question, text="Answer A", is_correct=True)
+        Choice.objects.create(question=question, text="Answer B", is_correct=False)
+        self.client.force_login(self.student)
+        self.assertNotContains(self.client.get(reverse("daily_quizzes")), daily.title)
+        self.assertEqual(self.client.get(reverse("exam_take", args=[daily.pk])).status_code, 404)
+        daily.daily_date = timezone.localdate()
+        daily.save(update_fields=["daily_date"])
+        self.assertContains(self.client.get(reverse("daily_quizzes")), daily.title)
+        self.assertEqual(self.client.get(reverse("exam_take", args=[daily.pk])).status_code, 200)
+        self.client.force_login(self.other)
+        self.assertNotContains(self.client.get(reverse("daily_quizzes")), daily.title)
+        self.assertEqual(self.client.get(reverse("exam_take", args=[daily.pk])).status_code, 404)
+
+    def test_answer_review_and_private_personal_rank(self):
+        self.question.explanation = "This is the documented reasoning."
+        self.question.save(update_fields=["explanation"])
+        Enrollment.objects.create(student=self.other, course=self.course)
+        Attempt.objects.create(
+            assessment=self.assessment, student=self.other,
+            score=2, total_marks=2, submitted_at=timezone.now(),
+        )
+        self.client.force_login(self.student)
+        self.client.post(self.take_url(), {f"question_{self.question.pk}": str(self.wrong.pk)})
+        attempt = Attempt.objects.get(student=self.student)
+        result_url = reverse("exam_result", args=[attempt.pk])
+        response = self.client.get(result_url)
+        self.assertContains(response, "Your rank:")
+        self.assertContains(response, "2 of 2")
+        self.assertContains(response, "Wrong answer")
+        self.assertContains(response, "Correct answer")
+        self.assertContains(response, "This is the documented reasoning.")
+        self.assertNotContains(response, self.other.email)
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(result_url).status_code, 404)
+
+    def test_daily_assessment_admin_requires_date(self):
+        from .admin import AssessmentForm
+
+        form = AssessmentForm(data={
+            "course": self.course.pk, "title": "No date",
+            "kind": Assessment.Kind.DAILY, "duration_minutes": 10,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn("Daily quizzes require a date.", str(form.errors))
