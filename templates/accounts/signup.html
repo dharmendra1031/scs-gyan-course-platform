@@ -1,3 +1,25 @@
 {% extends "base.html" %}
 {% block title %}Register | SCS Gyan{% endblock %}
-{% block content %}<section class="section"><div class="container"><div class="auth-card"><h1>Start learning</h1><p>Create your free student account.</p><form method="post">{% csrf_token %}<div class="form-fields">{{ form.as_div }}</div><button class="button button-primary full-width" type="submit">Create Account</button></form><p>Already registered? <a href="{% url 'login' %}">Sign in</a></p></div></div></section>{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="container auth-layout">
+    <aside class="auth-intro">
+      <span class="auth-intro-kicker">SCS GYAN · START LEARNING</span>
+      <h1>One place for focused preparation.</h1>
+      <p>Create your student account to explore courses and build your learning routine.</p>
+      <div class="auth-intro-bottom"><span aria-hidden="true">✦</span> Study • Practice • Progress</div>
+    </aside>
+    <div class="auth-card">
+      <span class="eyebrow accent">CREATE ACCOUNT</span>
+      <h1>Start learning</h1>
+      <p>Create your free student account.</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-fields">{{ form.as_div }}</div>
+        <button class="button button-primary full-width" type="submit">Create Account</button>
+      </form>
+      <p>Already registered? <a href="{% url 'login' %}">Sign in</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}
