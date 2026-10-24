@@ -140,3 +140,45 @@ class StudentBrowserTests(StaticLiveServerTestCase):
                 assert "Editorial study material" in page.locator("body").inner_text()
             finally:
                 browser.close()
+
+    def test_student_can_browse_submitted_test_history(self):
+        from playwright.sync_api import sync_playwright
+        from django.utils import timezone
+        from courses.models import Enrollment
+        from exams.models import Assessment, Attempt
+
+        category = Category.objects.create(name="Browser History", slug="browser-history")
+        course = Course.objects.create(
+            category=category, title="Browser History Course", slug="browser-history-course",
+            summary="History", description="Test history",
+            price=Decimal("0.00"), is_published=True,
+        )
+        user = get_user_model().objects.create_user(
+            username="browsertesthistory", email="browsertesthistory@example.com",
+            password="BrowserPass123!",
+        )
+        Enrollment.objects.create(student=user, course=course)
+        assessment = Assessment.objects.create(
+            course=course, title="Submitted History Quiz",
+            duration_minutes=30, is_published=True,
+        )
+        Attempt.objects.create(
+            assessment=assessment, student=user,
+            submitted_at=timezone.now(), score=3, total_marks=5,
+        )
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.goto(self.live_server_url + "/account/login/")
+                page.locator('input[name="username"]').fill("browsertesthistory")
+                page.locator('input[name="password"]').fill("BrowserPass123!")
+                page.locator('button[type="submit"]').click()
+                page.wait_for_url("**/account/dashboard/")
+                page.get_by_role("link", name="View My Test History").click()
+                page.wait_for_url("**/assessments/history/")
+                assert "Submitted History Quiz" in page.locator("body").inner_text()
+                assert "60%" in page.locator("body").inner_text()
+            finally:
+                browser.close()
