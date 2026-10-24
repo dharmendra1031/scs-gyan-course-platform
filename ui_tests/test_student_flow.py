@@ -214,7 +214,7 @@ class StudentBrowserTests(StaticLiveServerTestCase):
                 page.goto(self.live_server_url + "/courses/certificate-browser-course/")
                 page.get_by_role("button", name="Enroll for free").click()
                 page.wait_for_url("**/courses/certificate-browser-course/learn/")
-                page.get_by_role("link", name="Certificate Lesson").click()
+                page.get_by_role("link", name="Certificate Lesson", exact=True).click()
                 page.get_by_role("button", name="Mark as completed").click()
                 page.wait_for_url("**/courses/certificate-browser-course/learn/")
                 assert page.get_by_role("link", name="Download Certificate").count() == 1
