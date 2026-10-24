@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ assessment.title }} | SCS Gyan{% endblock %}
+{% block content %}
+<section class="page-banner"><div class="container">
+  <span class="eyebrow accent">{{ assessment.get_kind_display }}</span>
+  <h1>{{ assessment.title }}</h1>
+  <p>{{ assessment.duration_minutes }} minutes · One attempt · Answers are saved only on submission.</p>
+</div></section>
+<section class="section"><div class="container narrow">
+  <form method="post">{% csrf_token %}
+    {% for question in questions %}
+      <fieldset class="details-panel" style="margin-bottom:20px">
+        <legend><strong>{{ forloop.counter }}. {{ question.text }}</strong></legend>
+        {% for choice in question.choices.all %}
+          <label style="display:block;margin:12px 0">
+            <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}">
+            {{ choice.text }}
+          </label>
+        {% endfor %}
+      </fieldset>
+    {% endfor %}
+    <p class="subtle">Submit before the test time expires. Unanswered questions receive zero marks.</p>
+    <button type="submit" class="button button-primary">Submit answers</button>
+  </form>
+</div></section>
+{% endblock %}

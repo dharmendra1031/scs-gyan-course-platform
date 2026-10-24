@@ -107,6 +107,7 @@ def learn(request, slug):
     completed_ids = set(enrollment.completed_lessons.values_list("lesson_id", flat=True))
     return render(request, "courses/learn.html", {
         "course": course, "chapters": chapters, "completed_ids": completed_ids,
+        "assessments": course.assessments.filter(is_published=True),
     })
 
 
