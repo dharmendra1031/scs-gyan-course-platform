@@ -130,10 +130,6 @@ img {
     gap:24px
 }
 
-.menu-toggle {
-    display:none
-}
-
 .nav-links a {
     font-weight:600;
     font-size:14px
@@ -163,6 +159,10 @@ img {
     font-weight:700;
     white-space:nowrap;
     transition:background .2s,transform .2s
+}
+
+.menu-toggle {
+    display:none
 }
 
 .button:hover {

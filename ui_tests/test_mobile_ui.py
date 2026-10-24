@@ -35,6 +35,10 @@ class MobileUiTests(StaticLiveServerTestCase):
                     page.wait_for_url("**/courses/")
                     assert "Explore Courses" in page.locator("body").inner_text()
                     page.close()
+                desktop = browser.new_page(viewport={"width": 1280, "height": 800})
+                desktop.goto(self.live_server_url + "/")
+                assert not desktop.get_by_role("button", name="Menu").is_visible()
+                desktop.close()
             finally:
                 browser.close()
 
