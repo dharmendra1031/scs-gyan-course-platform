@@ -3,6 +3,8 @@ from django.urls import path
 from . import views, payment_views
 
 urlpatterns = [
+    path("<slug:slug>/certificate/request/", views.request_certificate, name="course_certificate_request"),
+    path("certificates/<int:certificate_id>/download/", views.download_certificate, name="course_certificate"),
     path("payments/<int:order_id>/checkout/", payment_views.checkout, name="course_checkout"),
     path("payments/<int:order_id>/verify/", payment_views.verify_payment, name="course_payment_verify"),
     path("payments/webhook/", payment_views.payment_webhook, name="course_payment_webhook"),

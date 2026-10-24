@@ -100,6 +100,20 @@ class StudyMaterial(models.Model):
         return self.title
 
 
+class CourseCertificate(models.Model):
+    enrollment = models.OneToOneField(
+        "courses.Enrollment", on_delete=models.CASCADE, related_name="certificate",
+    )
+    issued_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-issued_at"]
+
+    @property
+    def number(self):
+        return f"SCG-{self.pk:08d}"
+
+
 class Order(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"

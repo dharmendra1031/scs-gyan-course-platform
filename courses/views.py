@@ -4,13 +4,15 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Prefetch, Q
-from django.http import FileResponse, Http404, HttpResponseRedirect
+from django.http import FileResponse, Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
-from .models import Category, Chapter, Course, Enrollment, Lesson, LessonProgress, Order, StudyMaterial
+from .models import Category, Chapter, Course, CourseCertificate, Enrollment, Lesson, LessonProgress, Order, StudyMaterial
+from .certificates import issue_certificate, render_certificate
+from accounts.notifications import notify
 
 
 class CourseListView(ListView):
@@ -65,8 +67,13 @@ def enroll(request, slug):
         if Enrollment.objects.filter(course=course, student=request.user, is_active=True).exists():
             return redirect("course_learn", slug=slug)
         if course.price == Decimal("0"):
-            Enrollment.objects.update_or_create(
+            enrollment, _ = Enrollment.objects.update_or_create(
                 student=request.user, course=course, defaults={"is_active": True}
+            )
+            notify(
+                request.user, f"enrolled-{course.pk}", "Course enrollment",
+                f"You are enrolled in {course.title}.",
+                url_name="course_learn", args=[course.slug],
             )
             messages.success(request, "You are enrolled in this course.")
             return redirect("course_learn", slug=slug)
@@ -105,10 +112,16 @@ def learn(request, slug):
         Prefetch("lessons", queryset=Lesson.objects.filter(is_published=True))
     )
     completed_ids = set(enrollment.completed_lessons.values_list("lesson_id", flat=True))
+    published_ids = set(Lesson.objects.filter(
+        chapter__course=course, is_published=True,
+    ).values_list("id", flat=True))
+    certificate = CourseCertificate.objects.filter(enrollment=enrollment).first()
     return render(request, "courses/learn.html", {
         "course": course, "chapters": chapters, "completed_ids": completed_ids,
         "assessments": course.assessments.filter(is_published=True),
         "materials": course.materials.filter(is_published=True),
+        "certificate": certificate,
+        "certificate_ready": bool(published_ids and published_ids.issubset(completed_ids)),
     })
 
 
@@ -147,6 +160,7 @@ def download_notes(request, lesson_id):
 def complete_lesson(request, lesson_id):
     lesson, enrollment = enrolled_lesson(request, lesson_id)
     LessonProgress.objects.get_or_create(enrollment=enrollment, lesson=lesson)
+    issue_certificate(enrollment.pk)
     messages.success(request, "Lesson marked as complete.")
     return redirect("course_learn", slug=lesson.chapter.course.slug)
 
@@ -172,4 +186,38 @@ def download_material(request, material_id):
         content_type="application/pdf",
     )
     response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@login_required
+@require_POST
+def request_certificate(request, slug):
+    course = get_object_or_404(Course, slug=slug, is_published=True)
+    enrollment = get_object_or_404(
+        Enrollment, student=request.user, course=course, is_active=True,
+    )
+    certificate = issue_certificate(enrollment.pk)
+    if certificate is None:
+        messages.error(request, "Complete all published lessons before requesting a certificate.")
+        return redirect("course_learn", slug=course.slug)
+    return redirect("course_certificate", certificate_id=certificate.pk)
+
+
+@login_required
+@never_cache
+def download_certificate(request, certificate_id):
+    certificate = get_object_or_404(
+        CourseCertificate.objects.select_related(
+            "enrollment__student", "enrollment__course",
+        ),
+        pk=certificate_id, enrollment__student=request.user,
+        enrollment__is_active=True,
+    )
+    pdf = render_certificate(certificate)
+    response = HttpResponse(
+        pdf, content_type="application/pdf",
+    )
+    response["Content-Disposition"] = (
+        f'attachment; filename="scs-gyan-certificate-{certificate.pk}.pdf"'
+    )
     return response

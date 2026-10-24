@@ -8,4 +8,6 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("signup/", views.signup, name="signup"),
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("notifications/", views.notification_inbox, name="notification_inbox"),
+    path("notifications/<int:notification_id>/read/", views.mark_notification_read, name="notification_read"),
 ]
