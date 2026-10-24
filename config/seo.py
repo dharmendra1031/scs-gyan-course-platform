@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.sitemaps import Sitemap
 from django.http import HttpResponse
 from django.urls import reverse
@@ -8,7 +9,10 @@ from courses.models import Course
 
 
 def canonical_context(request):
-    return {"canonical_url": request.build_absolute_uri(request.path)}
+    return {
+        "canonical_url": request.build_absolute_uri(request.path),
+        "password_reset_enabled": settings.PASSWORD_RESET_ENABLED,
+    }
 
 
 class CourseSitemap(Sitemap):
