@@ -26,12 +26,31 @@ class ChapterInline(admin.TabularInline):
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     change_list_template = "admin/courses/course/change_list.html"
-    list_display = ("title", "category", "mode", "price", "is_published", "created_at")
+    list_display = ("title", "category", "mode", "price", "published_lessons", "is_published", "created_at")
     list_filter = ("is_published", "mode", "category")
     search_fields = ("title", "summary", "instructor_name", "seo_title", "seo_description")
     prepopulated_fields = {"slug": ("title",)}
     list_editable = ("is_published",)
     inlines = [ChapterInline]
+    fieldsets = (
+        ("Course details", {"fields": ("category", "title", "slug", "summary", "description", "thumbnail")}),
+        ("Learning information", {"fields": ("mode", "duration", "instructor_name", "learning_outcomes")}),
+        ("Pricing and publication", {"fields": ("price", "is_published")}),
+        ("Search appearance", {"fields": ("seo_title", "seo_description"), "classes": ("collapse",)}),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("category").annotate(
+            _published_lessons=Count(
+                "chapters__lessons",
+                filter=Q(chapters__lessons__is_published=True),
+                distinct=True,
+            ),
+        )
+
+    @admin.display(description="Published lessons", ordering="_published_lessons")
+    def published_lessons(self, obj):
+        return obj._published_lessons
 
     def get_urls(self):
         return [
@@ -101,6 +120,8 @@ class LessonInline(admin.TabularInline):
 class ChapterAdmin(admin.ModelAdmin):
     list_display = ("title", "course", "position")
     list_filter = ("course",)
+    search_fields = ("title", "course__title")
+    list_select_related = ("course",)
     inlines = [LessonInline]
 
 
@@ -108,6 +129,8 @@ class ChapterAdmin(admin.ModelAdmin):
 class LessonAdmin(admin.ModelAdmin):
     list_display = ("title", "chapter", "position", "is_published")
     list_filter = ("is_published", "chapter__course")
+    search_fields = ("title", "chapter__title", "chapter__course__title")
+    list_select_related = ("chapter__course",)
 
 
 @admin.register(StudyMaterial)
@@ -115,6 +138,7 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     list_display = ("title", "course", "is_published", "created_at")
     list_filter = ("course", "is_published")
     search_fields = ("title", "course__title")
+    list_select_related = ("course",)
     list_editable = ("is_published",)
 
 
