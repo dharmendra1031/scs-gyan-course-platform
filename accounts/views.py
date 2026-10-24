@@ -31,7 +31,10 @@ def dashboard(request):
     enrollments = Enrollment.objects.filter(
         student=request.user, is_active=True,
     ).select_related("course").annotate(
-        completed_count=Count("completed_lessons", distinct=True),
+        completed_count=Count(
+            "completed_lessons",
+            filter=Q(completed_lessons__lesson__is_published=True), distinct=True,
+        ),
         lesson_count=Count(
             "course__chapters__lessons",
             filter=Q(course__chapters__lessons__is_published=True), distinct=True,
