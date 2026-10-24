@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<p>Paid value includes only gateway-verified captured orders. Manual approvals are
+excluded; refunds and taxes are not deducted.</p>
+<table>
+<thead><tr><th>Course</th><th>Active students</th><th>Published lessons</th>
+<th>Published PDFs</th><th>Pending orders</th><th>Gateway payments</th><th>Captured order value (₹)</th></tr></thead>
+<tbody>
+{% for row in rows %}
+<tr><td>{{ row.course.title }}</td><td>{{ row.active_students }}</td>
+<td>{{ row.published_lessons }}</td><td>{{ row.published_materials }}</td>
+<td>{{ row.pending_orders }}</td><td>{{ row.captured_payments }}</td>
+<td>{{ row.captured_value|floatformat:2 }}</td></tr>
+{% empty %}<tr><td colspan="7">No courses yet.</td></tr>{% endfor %}
+</tbody></table>
+{% endblock %}

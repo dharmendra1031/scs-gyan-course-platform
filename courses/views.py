@@ -10,7 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
-from .models import Category, Chapter, Course, Enrollment, Lesson, LessonProgress, Order
+from .models import Category, Chapter, Course, Enrollment, Lesson, LessonProgress, Order, StudyMaterial
 
 
 class CourseListView(ListView):
@@ -108,6 +108,7 @@ def learn(request, slug):
     return render(request, "courses/learn.html", {
         "course": course, "chapters": chapters, "completed_ids": completed_ids,
         "assessments": course.assessments.filter(is_published=True),
+        "materials": course.materials.filter(is_published=True),
     })
 
 
@@ -148,3 +149,27 @@ def complete_lesson(request, lesson_id):
     LessonProgress.objects.get_or_create(enrollment=enrollment, lesson=lesson)
     messages.success(request, "Lesson marked as complete.")
     return redirect("course_learn", slug=lesson.chapter.course.slug)
+
+
+@login_required
+@never_cache
+def download_material(request, material_id):
+    material = get_object_or_404(
+        StudyMaterial.objects.select_related("course"),
+        pk=material_id, is_published=True, course__is_published=True,
+    )
+    get_object_or_404(
+        Enrollment, student=request.user, course=material.course, is_active=True,
+    )
+    if not material.file:
+        raise Http404("Study material is not available.")
+    try:
+        content = material.file.open("rb")
+    except (FileNotFoundError, OSError) as exc:
+        raise Http404("Study material is not available.") from exc
+    response = FileResponse(
+        content, as_attachment=True, filename=f"study-material-{material.pk}.pdf",
+        content_type="application/pdf",
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    return response

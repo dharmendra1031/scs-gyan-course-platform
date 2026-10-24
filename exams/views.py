@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.core.paginator import Paginator
 from django.http import HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -137,3 +138,19 @@ def assessment_result(request, attempt_id):
         "attempt": attempt, "review": review, "rank": higher_scores + 1,
         "participants": participants,
     })
+
+
+@login_required
+@never_cache
+def assessment_history(request):
+    attempts = (
+        Attempt.objects.filter(
+            student=request.user, submitted_at__isnull=False,
+            assessment__course__enrollments__student=request.user,
+            assessment__course__enrollments__is_active=True,
+        )
+        .select_related("assessment__course")
+        .order_by("-submitted_at", "-pk")
+    )
+    page = Paginator(attempts, 15).get_page(request.GET.get("page"))
+    return render(request, "exams/history.html", {"page": page})

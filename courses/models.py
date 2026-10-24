@@ -79,6 +79,25 @@ class Lesson(models.Model):
         return self.title
 
 
+class StudyMaterial(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="materials")
+    title = models.CharField(max_length=180)
+    description = models.CharField(max_length=350, blank=True)
+    file = models.FileField(
+        upload_to="course-materials/",
+        storage=private_storage,
+        validators=[FileExtensionValidator(["pdf"])],
+    )
+    is_published = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return self.title
+
+
 class Order(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"

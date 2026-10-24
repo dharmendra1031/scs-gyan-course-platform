@@ -1,6 +1,10 @@
 from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Q, Sum
+from django.template.response import TemplateResponse
+from django.urls import path
 
-from .models import Category, Chapter, Course, Enrollment, Lesson, LessonProgress, Order
+from .models import Category, Chapter, Course, Enrollment, Lesson, LessonProgress, Order, StudyMaterial
 from .services import approve_order
 
 
@@ -19,12 +23,66 @@ class ChapterInline(admin.TabularInline):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
+    change_list_template = "admin/courses/course/change_list.html"
     list_display = ("title", "category", "mode", "price", "is_published", "created_at")
     list_filter = ("is_published", "mode", "category")
     search_fields = ("title", "summary")
     prepopulated_fields = {"slug": ("title",)}
     list_editable = ("is_published",)
     inlines = [ChapterInline]
+
+    def get_urls(self):
+        return [
+            path("reports/", self.admin_site.admin_view(self.reports), name="courses_course_reports"),
+        ] + super().get_urls()
+
+    def reports(self, request):
+        if not request.user.is_superuser:
+            raise PermissionDenied
+        courses = list(
+            Course.objects.annotate(
+                active_students=Count(
+                    "enrollments", filter=Q(enrollments__is_active=True), distinct=True,
+                ),
+                published_lessons=Count(
+                    "chapters__lessons",
+                    filter=Q(chapters__lessons__is_published=True), distinct=True,
+                ),
+                published_materials=Count(
+                    "materials", filter=Q(materials__is_published=True), distinct=True,
+                ),
+            ).order_by("title")
+        )
+        pending = dict(
+            Order.objects.filter(status=Order.Status.PENDING)
+            .values_list("course_id")
+            .annotate(total=Count("id"))
+        )
+        paid = {
+            item["course_id"]: item
+            for item in Order.objects.filter(
+                status=Order.Status.PAID,
+                gateway_payment_id__isnull=False,
+                verified_at__isnull=False,
+            ).values("course_id").annotate(
+                total=Sum("amount"), payments=Count("id"),
+            )
+        }
+        rows = [{
+            "course": course,
+            "active_students": course.active_students,
+            "published_lessons": course.published_lessons,
+            "published_materials": course.published_materials,
+            "pending_orders": pending.get(course.pk, 0),
+            "captured_payments": paid.get(course.pk, {}).get("payments", 0),
+            "captured_value": paid.get(course.pk, {}).get("total", 0),
+        } for course in courses]
+        return TemplateResponse(request, "admin/courses/course/reports.html", {
+            **self.admin_site.each_context(request),
+            "title": "Course performance report",
+            "rows": rows,
+            "opts": self.model._meta,
+        })
 
 
 class LessonInline(admin.TabularInline):
@@ -43,6 +101,14 @@ class ChapterAdmin(admin.ModelAdmin):
 class LessonAdmin(admin.ModelAdmin):
     list_display = ("title", "chapter", "position", "is_published")
     list_filter = ("is_published", "chapter__course")
+
+
+@admin.register(StudyMaterial)
+class StudyMaterialAdmin(admin.ModelAdmin):
+    list_display = ("title", "course", "is_published", "created_at")
+    list_filter = ("course", "is_published")
+    search_fields = ("title", "course__title")
+    list_editable = ("is_published",)
 
 
 @admin.action(description="Approve verified payments and enroll students")
