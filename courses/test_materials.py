@@ -141,7 +141,7 @@ class CourseReportTests(TestCase):
         )
 
     def test_reports_superuser_only(self):
-        url = reverse("admin:courses_course_reports")
+        url = reverse("management:reports")
         self.assertEqual(self.client.get(url).status_code, 302)
         self.client.force_login(self.staff)
         self.assertEqual(self.client.get(url).status_code, 403)

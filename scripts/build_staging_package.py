@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DIRS = ("accounts", "articles", "config", "courses", "exams", "pages",
-        "templates", "static", "staticfiles")
+        "management", "templates", "static", "staticfiles")
 FILES = (
     "manage.py", "requirements.txt", ".env.example", ".env.staging.example",
     "scripts/staging_smoke.py", "scripts/staging_preflight.py",
@@ -64,7 +64,8 @@ def main():
             ".env.staging.example", "config/wsgi.py",
             "scripts/staging_smoke.py", "scripts/staging_preflight.py",
             "scripts/start_staging.ps1", "docs/staging-deployment.md",
-            "RELEASE-MANIFEST.json",
+            "management/views.py", "templates/management/base.html",
+            "staticfiles/css/management.css", "RELEASE-MANIFEST.json",
         }
         if not required.issubset(names):
             raise AssertionError(f"Missing release files: {required - names}")

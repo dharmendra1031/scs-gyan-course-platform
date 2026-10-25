@@ -6,16 +6,6 @@ from courses.models import Category, Chapter, Course, Lesson, StudyMaterial
 from exams.models import Assessment, Choice, Question
 
 
-class AutomaticSlugForm(forms.ModelForm):
-    """Fill missing slugs without modifying explicitly chosen URL slugs."""
-
-    def clean(self):
-        cleaned = super().clean()
-        if not cleaned.get("slug") and cleaned.get("title", cleaned.get("name")):
-            cleaned["slug"] = slugify(cleaned.get("title") or cleaned["name"])
-        return cleaned
-
-
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
@@ -33,6 +23,7 @@ class CourseForm(forms.ModelForm):
             "mode", "duration", "price", "seo_title", "seo_description",
             "is_published",
         )
+        labels = {"seo_title": "SEO title", "seo_description": "SEO description"}
 
     def clean_slug(self):
         slug = self.cleaned_data["slug"] or slugify(self.data.get("title", ""))
@@ -69,6 +60,7 @@ class ArticleForm(forms.ModelForm):
             "published_at", "seo_title", "seo_description", "is_published",
         )
         widgets = {"published_at": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M")}
+        labels = {"seo_title": "SEO title", "seo_description": "SEO description"}
 
     def clean_slug(self):
         slug = self.cleaned_data["slug"] or slugify(self.data.get("title", ""))

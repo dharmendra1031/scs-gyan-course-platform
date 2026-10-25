@@ -110,18 +110,11 @@ class StudentAccessTests(TestCase):
 
     def test_staff_permissions_cannot_grant_courses_or_promote_users(self):
         self.client.force_login(self.staff)
+        self.assertEqual(self.client.get("/admin/").status_code, 404)
+        self.assertEqual(self.client.get(reverse("management:students")).status_code, 403)
         self.assertEqual(
-            self.client.get(reverse("admin:accounts_user_change", args=[self.student.pk])).status_code,
-            403,
-        )
-        self.assertEqual(
-            self.client.get(reverse("admin:courses_enrollment_add")).status_code,
-            403,
-        )
-        self.assertEqual(
-            self.client.post(reverse("admin:courses_enrollment_add"), {
-                "student": self.student.pk, "course": self.course.pk, "is_active": "on",
-            }).status_code,
-            403,
+            self.client.post(
+                reverse("management:order_action", args=[self.order.pk, "approve"])
+            ).status_code, 403,
         )
         self.assertFalse(Enrollment.objects.filter(student=self.student).exists())
