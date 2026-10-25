@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from unittest import skipUnless
 
 from django.contrib.auth import get_user_model
@@ -14,6 +15,8 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
             username="reviewowner", email="reviewowner@example.com",
             password="ReviewPassword123!",
         )
+        output = Path("management-review")
+        output.mkdir(exist_ok=True)
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             try:
@@ -25,8 +28,10 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
                     page.get_by_role("button", name="Sign In").click()
                     page.wait_for_url("**/management/")
                     assert "Welcome back" in page.locator("h1").inner_text()
+                    page.screenshot(path=str(output / f"dashboard-{width}.png"), full_page=True)
                     page.get_by_role("navigation", name="Management").get_by_role("link", name="Courses").click()
                     page.wait_for_url("**/management/content/courses/")
+                    page.screenshot(path=str(output / f"courses-{width}.png"), full_page=True)
                     page.get_by_role("link", name="Add new").click()
                     page.wait_for_url("**/management/content/courses/new/")
                     assert page.get_by_role("textbox", name="Title", exact=True).is_visible()
@@ -38,6 +43,7 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
                             .slice(0, 8).map(el => el.tagName + '.' + el.className)
                     })""")
                     assert dimensions["scroll"] <= dimensions["width"] + 2, dimensions
+                    page.screenshot(path=str(output / f"editor-{width}.png"), full_page=True)
                     page.close()
             finally:
                 browser.close()

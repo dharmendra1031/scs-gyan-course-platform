@@ -27,3 +27,11 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Run browser tests
         run: python manage.py test ui_tests
+      - name: Upload management UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scs-gyan-management-ui-review
+          path: management-review/
+          if-no-files-found: ignore
+          retention-days: 14

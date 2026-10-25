@@ -13,3 +13,5 @@ staticfiles/
 .vscode/
 
 private_media/
+
+management-review/
