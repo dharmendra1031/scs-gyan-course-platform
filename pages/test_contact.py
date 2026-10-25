@@ -60,6 +60,6 @@ class ContactEnquiryTests(TestCase):
         )
         self.client.force_login(admin)
         self.assertEqual(
-            self.client.get(reverse("admin:pages_contactenquiry_changelist")).status_code,
+            self.client.get(reverse("management:enquiries")).status_code,
             200,
         )
