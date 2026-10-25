@@ -1,12 +1,27 @@
 {% extends "management/base.html" %}
 {% block title %}Enquiries{% endblock %}
 {% block content %}
-  <div class="manage-title"><div><p class="manage-eyebrow">STUDENT SUPPORT</p><h1>Contact enquiries</h1></div></div>
-  <section class="manage-panel"><div class="manage-table-wrap"><table>
-    <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th></tr></thead>
-    <tbody>{% for item in page %}
-    <tr><td>{{ item.created_at|date:"d M Y" }}</td><td>{{ item.name }}</td><td>{{ item.email }}</td>
-      <td>{{ item.subject }}</td><td>{{ item.message|linebreaksbr }}</td></tr>
-    {% empty %}<tr><td colspan="5">No enquiries yet.</td></tr>{% endfor %}</tbody>
-  </table></div>{% include "management/pagination.html" %}</section>
+  <div class="manage-title"><div><p class="manage-eyebrow">STUDENT SUPPORT</p>
+    <h1>Contact enquiries</h1><p>Review incoming questions and schedule follow-ups.</p>
+  </div></div>
+  <section class="manage-panel">
+    <form method="get" class="manage-filters">
+      <label for="enquiry-status">Status</label>
+      <select id="enquiry-status" name="status">
+        <option value="">All enquiries</option>
+        <option value="new" {% if status == "new" %}selected{% endif %}>New</option>
+        <option value="in_progress" {% if status == "in_progress" %}selected{% endif %}>In progress</option>
+        <option value="resolved" {% if status == "resolved" %}selected{% endif %}>Resolved</option>
+      </select>
+      <button class="manage-button" type="submit">Filter</button>
+    </form>
+    <div class="manage-table-wrap"><table>
+      <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Status</th><th>Follow-up</th></tr></thead>
+      <tbody>{% for item in page %}
+      <tr><td>{{ item.created_at|date:"d M Y" }}</td><td>{{ item.name }}</td><td>{{ item.email }}</td>
+        <td><a href="{% url 'management:enquiry_detail' item.pk %}">{{ item.subject }}</a></td>
+        <td>{{ item.get_status_display }}</td><td>{{ item.follow_up_at|date:"d M Y, h:i A"|default:"—" }}</td></tr>
+      {% empty %}<tr><td colspan="6">No enquiries found.</td></tr>{% endfor %}</tbody>
+    </table></div>{% include "management/pagination.html" %}
+  </section>
 {% endblock %}

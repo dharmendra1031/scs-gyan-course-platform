@@ -19,6 +19,7 @@ from courses.services import approve_order
 from exams.models import Assessment, Attempt
 from pages.models import ContactEnquiry
 
+from .enquiry_forms import EnquiryReviewForm
 from .resources import RESOURCES
 
 
@@ -172,8 +173,25 @@ def reports(request):
 @owner_only
 def enquiries(request):
     from django.core.paginator import Paginator
-    page = Paginator(ContactEnquiry.objects.all(), 25).get_page(request.GET.get("page"))
-    return render(request, "management/enquiries.html", {"page": page})
+    entries = ContactEnquiry.objects.all()
+    status = request.GET.get("status", "")
+    if status in ContactEnquiry.Status.values:
+        entries = entries.filter(status=status)
+    page = Paginator(entries, 25).get_page(request.GET.get("page"))
+    return render(request, "management/enquiries.html", {"page": page, "status": status})
+
+
+@owner_only
+def enquiry_detail(request, pk):
+    enquiry = get_object_or_404(ContactEnquiry, pk=pk)
+    form = EnquiryReviewForm(request.POST or None, instance=enquiry)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Enquiry updated.")
+        return redirect("management:enquiry_detail", pk=enquiry.pk)
+    return render(request, "management/enquiry_detail.html", {
+        "enquiry": enquiry, "form": form,
+    })
 
 
 @owner_only
@@ -182,6 +200,23 @@ def students(request):
     students = User.objects.filter(is_staff=False).order_by("-date_joined")
     page = Paginator(students, 25).get_page(request.GET.get("page"))
     return render(request, "management/students.html", {"page": page})
+
+
+@owner_only
+def student_detail(request, pk):
+    student = get_object_or_404(User, pk=pk, is_staff=False)
+    enrollments = (
+        Enrollment.objects.filter(student=student)
+        .select_related("course").order_by("-created_at")[:30]
+    )
+    orders = Order.objects.filter(student=student).select_related("course").order_by("-created_at")[:30]
+    attempts = (
+        Attempt.objects.filter(student=student, submitted_at__isnull=False)
+        .select_related("assessment").order_by("-submitted_at")[:15]
+    )
+    return render(request, "management/student_detail.html", {
+        "student": student, "enrollments": enrollments, "orders": orders, "attempts": attempts,
+    })
 
 
 @owner_only

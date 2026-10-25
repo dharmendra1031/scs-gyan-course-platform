@@ -1,0 +1,38 @@
+{% extends "management/base.html" %}
+{% block title %}Student #{{ student.pk }}{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">STUDENT DIRECTORY</p>
+    <h1>{{ student.get_full_name|default:student.username }}</h1>
+    <p>{{ student.email }} · Joined {{ student.date_joined|date:"d M Y" }}</p>
+  </div><a href="{% url 'management:students' %}">Back to students</a></div>
+  <section class="manage-panel">
+    <h2>Course enrollments</h2>
+    <div class="manage-table-wrap"><table>
+      <thead><tr><th>Course</th><th>Status</th><th>Enrolled</th></tr></thead>
+      <tbody>{% for item in enrollments %}
+        <tr><td>{{ item.course.title }}</td><td>{% if item.is_active %}Active{% else %}Inactive{% endif %}</td>
+        <td>{{ item.created_at|date:"d M Y" }}</td></tr>
+      {% empty %}<tr><td colspan="3">No enrollments.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  <section class="manage-panel">
+    <h2>Orders</h2>
+    <div class="manage-table-wrap"><table>
+      <thead><tr><th>Order</th><th>Course</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>{% for item in orders %}
+        <tr><td>#{{ item.pk }}</td><td>{{ item.course.title }}</td><td>₹{{ item.amount }}</td>
+        <td>{{ item.get_status_display }}</td></tr>
+      {% empty %}<tr><td colspan="4">No orders.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  <section class="manage-panel">
+    <h2>Submitted tests</h2>
+    <div class="manage-table-wrap"><table>
+      <thead><tr><th>Assessment</th><th>Score</th><th>Submitted</th></tr></thead>
+      <tbody>{% for item in attempts %}
+        <tr><td>{{ item.assessment.title }}</td><td>{{ item.score }} / {{ item.total_marks }}</td>
+        <td>{{ item.submitted_at|date:"d M Y" }}</td></tr>
+      {% empty %}<tr><td colspan="3">No submitted tests.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+{% endblock %}
