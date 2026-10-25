@@ -52,7 +52,7 @@ class ContactEnquiryTests(TestCase):
         ))
         self.client.force_login(staff)
         self.assertEqual(
-            self.client.get(reverse("admin:pages_contactenquiry_changelist")).status_code,
+            self.client.get(reverse("management:enquiries")).status_code,
             403,
         )
         admin = User.objects.create_superuser(

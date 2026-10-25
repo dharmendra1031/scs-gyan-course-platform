@@ -7,19 +7,18 @@ from django.urls import reverse
 from .models import Category, Chapter, Course, Lesson, StudyMaterial
 
 
-class ContentAdminTests(TestCase):
+class ContentManagementTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        admin = get_user_model().objects.create_superuser(
-            username="contentadmin", email="contentadmin@example.com",
-            password="AdminPassphrase123!",
+        cls.owner = get_user_model().objects.create_superuser(
+            username="contentowner", email="contentowner@example.com",
+            password="OwnerPassword123!",
         )
-        cls.admin = admin
-        cat = Category.objects.create(name="Public Policy", slug="public-policy")
+        cls.category = Category.objects.create(name="Public Policy", slug="public-policy")
         cls.course = Course.objects.create(
-            category=cat, title="Policy Foundations", slug="policy-foundations",
-            summary="Structured preparation", description="Course details",
-            price=Decimal("299.00"), is_published=True,
+            category=cls.category, title="Policy Foundations",
+            slug="policy-foundations", summary="Structured preparation",
+            description="Course details", price=Decimal("299.00"), is_published=True,
         )
         chapter = Chapter.objects.create(course=cls.course, title="Unit One")
         Lesson.objects.create(chapter=chapter, title="Public lesson", is_published=True)
@@ -30,31 +29,52 @@ class ContentAdminTests(TestCase):
         )
 
     def setUp(self):
-        self.client.force_login(self.admin)
+        self.client.force_login(self.owner)
 
-    def test_course_admin_displays_published_lesson_count(self):
-        response = self.client.get(reverse("admin:courses_course_changelist"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Published lessons")
-        result = next(
-            entry for entry in response.context["cl"].result_list
-            if entry.pk == self.course.pk
+    def test_course_list_and_editor_load(self):
+        self.assertContains(
+            self.client.get(reverse("management:list", args=["courses"])),
+            "Policy Foundations",
         )
-        self.assertEqual(result._published_lessons, 1)
+        page = self.client.get(reverse("management:edit", args=["courses", self.course.pk]))
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Learning outcomes")
+        self.assertContains(page, "SEO title")
 
-    def test_admin_edit_form_groups_fields(self):
-        response = self.client.get(reverse("admin:courses_course_change", args=[self.course.pk]))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Learning information")
-        self.assertContains(response, "Search appearance")
+    def test_lesson_and_material_search(self):
+        url = reverse("management:list", args=["lessons"])
+        result = self.client.get(url, {"q": "Public lesson"})
+        self.assertContains(result, "Public lesson")
+        self.assertNotContains(result, "Draft lesson")
+        page = self.client.get(
+            reverse("management:list", args=["materials"]), {"q": "Governance PDF"}
+        )
+        self.assertContains(page, "Governance PDF")
 
-    def test_admin_lesson_and_study_material_search(self):
-        lessons = self.client.get(
-            reverse("admin:courses_lesson_changelist"), {"q": "Public lesson"},
+    def test_course_create_and_edit(self):
+        url = reverse("management:create", args=["courses"])
+        payload = {
+            "category": self.category.pk,
+            "title": "New policy workshop", "slug": "",
+            "summary": "New workshop", "description": "Study together",
+            "mode": "recorded", "price": "0.00",
+        }
+        self.assertRedirects(self.client.post(url, payload),
+                             reverse("management:list", args=["courses"]))
+        course = Course.objects.get(title="New policy workshop")
+        self.assertEqual(course.slug, "new-policy-workshop")
+        payload["title"] = "Updated workshop"
+        payload["slug"] = "new-policy-workshop"
+        self.assertRedirects(
+            self.client.post(reverse("management:edit", args=["courses", course.pk]), payload),
+            reverse("management:list", args=["courses"]),
         )
-        self.assertContains(lessons, "Public lesson")
-        self.assertNotContains(lessons, "Draft lesson")
-        materials = self.client.get(
-            reverse("admin:courses_studymaterial_changelist"), {"q": "Governance PDF"},
+        course.refresh_from_db()
+        self.assertEqual(course.title, "Updated workshop")
+
+    def test_missing_and_unknown_resources_are_not_exposed(self):
+        self.assertEqual(self.client.get(reverse("management:list", args=["orders"])).status_code, 404)
+        self.assertEqual(
+            self.client.get(reverse("management:edit", args=["courses", 999999])).status_code,
+            404,
         )
-        self.assertContains(materials, "Governance PDF")

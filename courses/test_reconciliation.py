@@ -132,16 +132,12 @@ class RefundReconciliationTests(TestCase):
     @patch("courses.reconciliation.fetch_gateway_payment")
     def test_admin_reconciliation_is_read_only_and_superuser_only(self, fetch):
         fetch.return_value = self.payment(10000)
-        url = reverse("admin:courses_order_changelist")
-        data = {
-            "action": "reconcile_refunds", "_selected_action": [self.order.pk],
-        }
+        url = reverse("management:order_action", args=[self.order.pk, "reconcile"])
         self.client.force_login(self.staff)
-        response = self.client.post(url, data)
-        self.assertIn(response.status_code, (200, 302))
+        self.assertEqual(self.client.post(url).status_code, 403)
         fetch.assert_not_called()
         self.client.force_login(self.superuser)
-        self.assertEqual(self.client.post(url, data, follow=True).status_code, 200)
+        self.assertRedirects(self.client.post(url), reverse("management:orders"))
         fetch.assert_called_once_with("pay_refund_scs")
         self.order.refresh_from_db()
         self.assertEqual(self.order.refunded_amount, Decimal("100.00"))
@@ -149,7 +145,7 @@ class RefundReconciliationTests(TestCase):
     def test_superuser_report_shows_recorded_net_value(self):
         reconcile_order_refund(self.order.pk, self.payment(17500))
         self.client.force_login(self.superuser)
-        response = self.client.get(reverse("admin:courses_course_reports"))
+        response = self.client.get(reverse("management:reports"))
         row = next(row for row in response.context["rows"] if row["course"].pk == self.course.pk)
         self.assertEqual(row["captured_value"], Decimal("600.00"))
         self.assertEqual(row["recorded_refunds"], Decimal("175.00"))

@@ -134,9 +134,9 @@ class AssessmentTests(TestCase):
         self.assertEqual(self.client.get(self.take_url()).status_code, 404)
 
     def test_admin_performance_is_private(self):
-        url = reverse("admin:exams_attempt_performance")
+        url = reverse("management:results")
         self.client.force_login(self.student)
-        self.assertEqual(self.client.get(url).status_code, 302)
+        self.assertEqual(self.client.get(url).status_code, 403)
         admin = get_user_model().objects.create_superuser(
             username="examadmin", email="examadmin@example.com", password="SafePassword123!"
         )
@@ -186,7 +186,7 @@ class AssessmentTests(TestCase):
         self.assertEqual(self.client.get(result_url).status_code, 404)
 
     def test_daily_assessment_admin_requires_date(self):
-        from .admin import AssessmentForm
+        from management.forms import AssessmentForm
 
         form = AssessmentForm(data={
             "course": self.course.pk, "title": "No date",
