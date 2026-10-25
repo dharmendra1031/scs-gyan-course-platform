@@ -94,7 +94,7 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
                 assert "enrolledstudent@example.com" in page.locator("body").inner_text()
                 page.screenshot(path=str(output / "student-detail-390.png"), full_page=True)
                 page.goto(self.live_server_url + f"/management/enquiries/{enquiry.pk}/")
-                assert "Batch details" in page.locator("h2").inner_text()
+                assert page.get_by_role("heading", name="Batch details").is_visible()
                 page.get_by_label("Status").select_option("in_progress")
                 page.get_by_label("Internal notes").fill("Call student after 4 PM.")
                 page.get_by_role("button", name="Save follow-up").click()
