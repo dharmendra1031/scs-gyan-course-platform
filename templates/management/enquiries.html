@@ -1,0 +1,12 @@
+{% extends "management/base.html" %}
+{% block title %}Enquiries{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">STUDENT SUPPORT</p><h1>Contact enquiries</h1></div></div>
+  <section class="manage-panel"><div class="manage-table-wrap"><table>
+    <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th></tr></thead>
+    <tbody>{% for item in page %}
+    <tr><td>{{ item.created_at|date:"d M Y" }}</td><td>{{ item.name }}</td><td>{{ item.email }}</td>
+      <td>{{ item.subject }}</td><td>{{ item.message|linebreaksbr }}</td></tr>
+    {% empty %}<tr><td colspan="5">No enquiries yet.</td></tr>{% endfor %}</tbody>
+  </table></div>{% include "management/pagination.html" %}</section>
+{% endblock %}

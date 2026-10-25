@@ -1,0 +1,13 @@
+{% extends "management/base.html" %}
+{% block title %}Student Performance{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">ASSESSMENTS</p><h1>Student performance</h1></div></div>
+  <section class="manage-panel"><div class="manage-table-wrap"><table>
+    <thead><tr><th>Course</th><th>Assessment</th><th>Attempts</th><th>Average score</th><th>Highest score</th></tr></thead>
+    <tbody>{% for row in summary %}
+      <tr><td>{{ row.assessment__course__title }}</td><td>{{ row.assessment__title }}</td>
+        <td>{{ row.students }}</td><td>{{ row.average_score|floatformat:2 }}</td>
+        <td>{{ row.highest_score }}</td></tr>
+    {% empty %}<tr><td colspan="5">No submitted test results.</td></tr>{% endfor %}</tbody>
+  </table></div></section>
+{% endblock %}

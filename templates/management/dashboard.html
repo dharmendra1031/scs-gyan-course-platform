@@ -1,0 +1,25 @@
+{% extends "management/base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">MANAGEMENT OVERVIEW</p>
+    <h1>Welcome back</h1><p>Courses, students, and enquiries at a glance.</p></div></div>
+  <div class="manage-stats">
+    {% for label, total, resource in stats %}
+      <section class="manage-stat"><span>{{ label }}</span><strong>{{ total }}</strong></section>
+    {% endfor %}
+  </div>
+  <div class="manage-columns">
+    <section class="manage-panel">
+      <div class="manage-title"><h2>Latest orders</h2><a href="{% url 'management:orders' %}">View all</a></div>
+      {% for order in recent_orders %}
+        <div class="manage-record"><div><strong>#{{ order.id }} · {{ order.course.title }}</strong><small>{{ order.student.email }}</small></div><span>{{ order.get_status_display }}</span></div>
+      {% empty %}<p>No orders yet.</p>{% endfor %}
+    </section>
+    <section class="manage-panel">
+      <div class="manage-title"><h2>Recent enquiries</h2><a href="{% url 'management:enquiries' %}">View all</a></div>
+      {% for item in recent_enquiries %}
+        <div class="manage-record"><div><strong>{{ item.subject }}</strong><small>{{ item.name }}</small></div><span>{{ item.created_at|date:"d M" }}</span></div>
+      {% empty %}<p>No enquiries yet.</p>{% endfor %}
+    </section>
+  </div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "management/base.html" %}
+{% block title %}Students{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">STUDENTS</p><h1>Student directory</h1>
+    <p>Read-only directory. Account and role changes are not enabled from this interface.</p>
+  </div></div>
+  <section class="manage-panel"><div class="manage-table-wrap"><table>
+    <thead><tr><th>ID</th><th>Name</th><th>Username</th><th>Email</th><th>Joined</th></tr></thead>
+    <tbody>{% for user in page %}
+      <tr><td>{{ user.pk }}</td><td>{{ user.get_full_name }}</td><td>{{ user.username }}</td><td>{{ user.email }}</td>
+        <td>{{ user.date_joined|date:"d M Y" }}</td></tr>
+    {% empty %}<tr><td colspan="5">No student accounts yet.</td></tr>{% endfor %}</tbody>
+  </table></div>{% include "management/pagination.html" %}</section>
+{% endblock %}

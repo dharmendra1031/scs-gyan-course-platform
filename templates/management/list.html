@@ -1,0 +1,24 @@
+{% extends "management/base.html" %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">CONTENT MANAGEMENT</p><h1>{{ heading }}</h1></div>
+    <a class="manage-button" href="{% url 'management:create' resource %}">+ Add new</a>
+  </div>
+  <section class="manage-panel">
+    <form method="get" class="manage-filters">
+      <label for="content-search" class="sr-only">Search {{ heading }}</label>
+      <input id="content-search" type="search" name="q" value="{{ query }}" placeholder="Search {{ heading|lower }}">
+      <button type="submit" class="manage-button">Search</button>
+    </form>
+    <div class="manage-table-wrap"><table>
+      <thead><tr><th>ID</th><th>Record</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for record in page %}
+      <tr><td>{{ record.pk }}</td><td><strong>{{ record|truncatechars:100 }}</strong></td>
+        <td><a href="{% url 'management:edit' resource record.pk %}">Edit</a></td></tr>
+      {% empty %}<tr><td colspan="3">No records found. Add your first item.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+    {% include "management/pagination.html" %}
+  </section>
+{% endblock %}

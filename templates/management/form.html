@@ -1,0 +1,25 @@
+{% extends "management/base.html" %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">CONTENT MANAGEMENT</p>
+    <h1>{% if editing %}Edit{% else %}New{% endif %} {{ heading }}</h1></div>
+    <a href="{% url 'management:list' resource %}">Back to list</a>
+  </div>
+  <section class="manage-panel manage-editor">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="manage-errors">{{ form.non_field_errors }}</div>{% endif %}
+      {% for field in form %}
+        <div class="manage-field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+          {% if field.errors %}<div class="manage-errors">{{ field.errors }}</div>{% endif %}
+        </div>
+      {% endfor %}
+      <div class="manage-editor-actions"><button type="submit" class="manage-button">Save changes</button>
+        <a href="{% url 'management:list' resource %}">Cancel</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}
