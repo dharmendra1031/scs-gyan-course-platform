@@ -100,7 +100,7 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
                 page.get_by_role("button", name="Save follow-up").click()
                 assert "Enquiry updated." in page.locator("body").inner_text()
                 assert page.get_by_label("Status").input_value() == "in_progress"
-                assert "Call student after 4 PM." in page.locator("body").inner_text()
+                assert page.get_by_label("Internal notes").input_value() == "Call student after 4 PM."
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 2")
                 page.screenshot(path=str(output / "enquiry-detail-390.png"), full_page=True)
             finally:
