@@ -37,4 +37,5 @@ class AccountTests(TestCase):
         student = get_user_model().objects.get(username="student2")
         self.assertFalse(student.is_staff)
         self.assertFalse(student.is_superuser)
-        self.assertEqual(self.client.get("/admin/").status_code, 302)
+        self.assertEqual(self.client.get("/management/").status_code, 403)
+        self.assertEqual(self.client.get("/admin/").status_code, 404)

@@ -1,6 +1,6 @@
 # SCS Gyan Course Platform
 
-Django course selling platform starter with a responsive public website, student account foundation and Django Admin course management.
+Django course selling platform starter with a responsive public website, student account foundation and a custom SCS Gyan management portal.
 
 Client UI concept: open `design-preview.html` in a local browser. This is a static demonstration, not the running Django site. See `docs/development-plan.md` for planned modules and delivery stages.
 
@@ -31,7 +31,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Go to `http://127.0.0.1:8000/` for the public website and `/admin/` for course management.
+Go to `http://127.0.0.1:8000/` for the public website and `/management/` for owner-only course management.
 
 For a **local-only UI demo** without SQL Server, set `DEBUG=True` and `DB_ENGINE=sqlite` in `.env`. Then run `migrate` and optionally load demonstration content:
 
@@ -57,14 +57,14 @@ tests on each push to `development` and pull request to `main`.
 
 - Public course catalog and responsive pages
 - Student signup, login and course dashboard
-- Course, Chapter and Lesson management in Django Admin
+- Course, Chapter and Lesson management in the custom owner portal
 - Free enrollment, pending paid orders, student lesson progress, protected PDF notes
 - Optional Razorpay checkout with server-side signature verification, payment capture
   validation, idempotent webhooks, and superuser-only manual approval
 - Quiz, Test Series and enrolled-student Daily Quiz with server-side scoring,
   answer explanations, private results and personal rank
 - Current Affairs, Editorial and Blog with publish scheduling, search and filters
-- Admin-managed course PDF study materials served from private storage to enrolled students
+- Management-portal course PDF study materials served from private storage to enrolled students
 - Student test history with private result links and pagination
 - Superuser-only course reports with enrollments, lessons, PDF counts, pending orders and verified gateway order value
 - Read-only Razorpay refund reconciliation with partial/full refund tracking and net recorded value
@@ -124,3 +124,20 @@ Do not commit `.env`, SQL connection strings, payment secrets or licensed course
 **Not yet accepted for production:** Real Razorpay sandbox transactions and refunds,
 approved domain/hosting, backups, production private storage, end-to-end admin UI
 acceptance, and deployment monitoring.
+
+## Custom management portal
+
+Django's built-in Admin interface is **not installed or routed**. Only
+authenticated active superusers can access `/management/`. It includes
+content editing (categories, courses, lessons, materials, articles, questions,
+and answer choices), student and enquiry lists, paid order approval, read-only
+Razorpay refund checks, and performance reports.
+
+Create an initial owner with `python manage.py createsuperuser`; staff accounts
+alone cannot access management. Access checks are server-side. Session logout
+uses POST and all editing and payment actions require CSRF-protected POST.
+The portal shares Django authentication and SQL Server persistence but uses
+independent templates and a small `management.css` design layer.
+
+It does not provide granular staff roles or live gateway settlement; those
+need separate acceptance and authorization design.

@@ -15,7 +15,6 @@ if not DEBUG and SECRET_KEY == "local-development-only-change-me":
     raise RuntimeError("Set SECRET_KEY before running outside development.")
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -27,6 +26,7 @@ INSTALLED_APPS = [
     "exams",
     "articles",
     "pages",
+    "management",
 ]
 
 MIDDLEWARE = [
