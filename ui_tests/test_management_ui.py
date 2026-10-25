@@ -30,7 +30,14 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
                     page.get_by_role("link", name="Add new").click()
                     page.wait_for_url("**/management/content/courses/new/")
                     assert page.get_by_role("textbox", name="Title", exact=True).is_visible()
-                    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 2")
+                    dimensions = page.evaluate("""() => ({
+                        width: innerWidth,
+                        scroll: document.documentElement.scrollWidth,
+                        overflowing: [...document.querySelectorAll('*')]
+                            .filter(el => el.getBoundingClientRect().right > innerWidth + 2)
+                            .slice(0, 8).map(el => el.tagName + '.' + el.className)
+                    })""")
+                    assert dimensions["scroll"] <= dimensions["width"] + 2, dimensions
                     page.close()
             finally:
                 browser.close()
