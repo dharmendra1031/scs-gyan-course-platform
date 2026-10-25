@@ -53,3 +53,55 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
                     page.close()
             finally:
                 browser.close()
+
+    def test_owner_can_manage_enquiry_and_view_student_on_mobile(self):
+        from playwright.sync_api import sync_playwright
+        from courses.models import Category, Course, Enrollment
+        from pages.models import ContactEnquiry
+
+        owner = get_user_model().objects.create_superuser(
+            username="supportowner", email="supportowner@example.com",
+            password="ReviewPassword123!",
+        )
+        student = get_user_model().objects.create_user(
+            username="enrolledstudent", email="enrolledstudent@example.com",
+            password="ReviewPassword123!",
+        )
+        category = Category.objects.create(name="Exam prep", slug="exam-prep")
+        course = Course.objects.create(
+            category=category, title="Exam Prep 101", slug="exam-prep-101",
+            summary="Starter course", description="Introduction", price=0,
+            is_published=True,
+        )
+        Enrollment.objects.create(course=course, student=student)
+        enquiry = ContactEnquiry.objects.create(
+            name="Interested Learner", email="learner@example.com",
+            subject="Batch details", message="Please send details of the next course.",
+        )
+        output = Path("management-review")
+        output.mkdir(exist_ok=True)
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.goto(self.live_server_url + "/account/login/")
+                page.locator('input[name="username"]').fill(owner.username)
+                page.locator('input[name="password"]').fill("ReviewPassword123!")
+                page.get_by_role("button", name="Sign In").click()
+                page.wait_for_url("**/management/")
+                page.goto(self.live_server_url + f"/management/students/{student.pk}/")
+                assert "Exam Prep 101" in page.locator("body").inner_text()
+                assert "enrolledstudent@example.com" in page.locator("body").inner_text()
+                page.screenshot(path=str(output / "student-detail-390.png"), full_page=True)
+                page.goto(self.live_server_url + f"/management/enquiries/{enquiry.pk}/")
+                assert "Batch details" in page.locator("h2").inner_text()
+                page.get_by_label("Status").select_option("in_progress")
+                page.get_by_label("Internal notes").fill("Call student after 4 PM.")
+                page.get_by_role("button", name="Save follow-up").click()
+                assert "Enquiry updated." in page.locator("body").inner_text()
+                assert page.get_by_label("Status").input_value() == "in_progress"
+                assert "Call student after 4 PM." in page.locator("body").inner_text()
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 2")
+                page.screenshot(path=str(output / "enquiry-detail-390.png"), full_page=True)
+            finally:
+                browser.close()
