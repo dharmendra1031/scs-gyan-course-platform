@@ -1,0 +1,39 @@
+{% extends "management/base.html" %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">OPERATIONS</p><h1>Orders & Refunds</h1>
+    <p>Only verified gateway payments count toward captured revenue. Refund reconciliation only reads gateway status.</p>
+  </div></div>
+  <section class="manage-panel">
+    <form method="get" class="manage-filters">
+      <label for="order-status">Status</label>
+      <select id="order-status" name="status">
+        <option value="">All orders</option>
+        <option value="pending" {% if status == "pending" %}selected{% endif %}>Pending</option>
+        <option value="paid" {% if status == "paid" %}selected{% endif %}>Paid</option>
+        <option value="cancelled" {% if status == "cancelled" %}selected{% endif %}>Cancelled</option>
+      </select><button class="manage-button">Filter</button>
+    </form>
+    <div class="manage-table-wrap"><table>
+      <thead><tr><th>Order</th><th>Student</th><th>Course</th><th>Amount</th><th>Refund</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>{% for order in page %}
+        <tr><td>#{{ order.pk }}</td><td>{{ order.student.email }}</td><td>{{ order.course.title }}</td>
+          <td>₹{{ order.amount }}</td><td>₹{{ order.refunded_amount }}</td>
+          <td>{{ order.get_status_display }}</td>
+          <td>
+          {% if order.status == "pending" %}
+            <form method="post" action="{% url 'management:order_action' order.pk 'approve' %}">{% csrf_token %}
+              <button type="submit" class="manage-action">Approve</button>
+            </form>
+          {% elif order.status == "paid" and order.gateway_payment_id %}
+            <form method="post" action="{% url 'management:order_action' order.pk 'reconcile' %}">{% csrf_token %}
+              <button type="submit" class="manage-action">Check refunds</button>
+            </form>
+          {% else %}—{% endif %}
+          </td>
+        </tr>
+      {% empty %}<tr><td colspan="7">No orders found.</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% include "management/pagination.html" %}
+  </section>
+{% endblock %}

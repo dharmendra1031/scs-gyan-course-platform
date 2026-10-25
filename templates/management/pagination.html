@@ -1,0 +1,7 @@
+{% if page.has_other_pages %}
+  <nav class="manage-pagination" aria-label="Pages">
+    {% if page.has_previous %}<a href="?q={{ query|default:''|urlencode }}&page={{ page.previous_page_number }}{% if status %}&status={{ status }}{% endif %}">Previous</a>{% endif %}
+    <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a href="?q={{ query|default:''|urlencode }}&page={{ page.next_page_number }}{% if status %}&status={{ status }}{% endif %}">Next</a>{% endif %}
+  </nav>
+{% endif %}

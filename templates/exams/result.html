@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ attempt.assessment.title }} Result | SCS Gyan{% endblock %}
+{% block content %}
+<section class="page-banner"><div class="container">
+  <span class="eyebrow accent">TEST RESULT</span>
+  <h1>{{ attempt.assessment.title }}</h1>
+  <p>Your submission has been evaluated.</p>
+</div></section>
+<section class="section"><div class="container narrow">
+  <div class="details-panel">
+    <h2>{{ attempt.score }} / {{ attempt.total_marks }} marks</h2>
+    <p><strong>{{ attempt.percent }}%</strong> · Submitted {{ attempt.submitted_at|date:"d M Y, h:i A" }}</p>
+    <p><strong>Your rank:</strong> {{ rank }} of {{ participants }} submitted attempts (same maximum marks)</p>
+    <p class="subtle">This assessment allows one attempt.</p>
+    <a class="button button-primary" href="{% url 'course_learn' attempt.assessment.course.slug %}">Back to Course</a>
+  </div>
+  <h2>Answer review</h2>
+  {% for item in review %}
+    <div class="details-panel" style="margin-bottom:16px">
+      <h3>{{ forloop.counter }}. {{ item.question.text }}</h3>
+      <p><strong>Your answer:</strong> {% if item.selected %}{{ item.selected.text }}{% else %}Not answered{% endif %}</p>
+      <p><strong>Correct answer:</strong> {{ item.correct.text|default:"Not available" }}</p>
+      {% if item.question.explanation %}
+        <p><strong>Explanation:</strong> {{ item.question.explanation|linebreaksbr }}</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div></section>
+{% endblock %}

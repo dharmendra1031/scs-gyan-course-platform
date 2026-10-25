@@ -11,3 +11,7 @@ staticfiles/
 .pytest_cache/
 .idea/
 .vscode/
+
+private_media/
+
+management-review/

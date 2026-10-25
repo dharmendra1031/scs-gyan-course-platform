@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Secure Checkout | SCS Gyan{% endblock %}
+{% block content %}
+<section class="page-banner"><div class="container"><span class="eyebrow accent">SECURE CHECKOUT</span><h1>{{ order.course.title }}</h1><p>Pay ₹{{ order.amount }} to access your course.</p></div></section>
+<section class="section"><div class="container"><div class="details-panel"><p>Payments are securely processed by Razorpay. We do not store card details.</p>
+<button id="pay-now" type="button" class="button button-primary">Pay ₹{{ order.amount }}</button>
+<a href="{% url 'dashboard' %}" class="button button-outline">Back to orders</a>
+<form id="payment-verification" method="post" action="{% url 'course_payment_verify' order.pk %}">{% csrf_token %}
+<input type="hidden" name="razorpay_order_id" id="gateway-order-id">
+<input type="hidden" name="razorpay_payment_id" id="gateway-payment-id">
+<input type="hidden" name="razorpay_signature" id="gateway-signature">
+</form></div></div></section>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const verifyForm = document.getElementById('payment-verification');
+  const checkout = new Razorpay({
+    key: '{{ gateway_key|escapejs }}',
+    amount: {{ amount_paise }},
+    currency: 'INR',
+    name: 'SCS Gyan',
+    order_id: '{{ order.gateway_order_id|escapejs }}',
+    handler: function (payment) {
+      document.getElementById('gateway-order-id').value = payment.razorpay_order_id;
+      document.getElementById('gateway-payment-id').value = payment.razorpay_payment_id;
+      document.getElementById('gateway-signature').value = payment.razorpay_signature;
+      verifyForm.submit();
+    }
+  });
+  document.getElementById('pay-now').addEventListener('click', function () {
+    checkout.open();
+  });
+</script>
+{% endblock %}

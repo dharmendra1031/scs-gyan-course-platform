@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }} Confirmation | SCS Gyan{% endblock %}
+{% block content %}
+<section class="page-banner"><div class="container">
+<span class="eyebrow accent">ORDER #{{ order.id }}</span>
+<h1>{% if order.gateway_payment_id and order.verified_at %}Payment acknowledgement{% else %}Enrollment confirmation{% endif %}</h1>
+<p>Keep this confirmation for your records.</p>
+</div></section>
+<section class="section"><div class="container detail-layout"><article class="details-panel">
+<h2>{{ order.course.title }}</h2>
+<p><strong>Student:</strong> {{ order.student.get_full_name|default:order.student.username }}</p>
+<p><strong>Email:</strong> {{ order.student.email }}</p>
+<p><strong>Order number:</strong> {{ order.id }}</p>
+<p><strong>Amount:</strong> ₹{{ order.amount }}</p>
+<p><strong>Status:</strong> {{ order.get_status_display }}</p>
+{% if order.refunded_amount %}<p><strong>Recorded refund:</strong> ₹{{ order.refunded_amount }}</p>{% endif %}
+{% if order.fully_refunded %}<p><strong>Refund status:</strong> Fully refunded</p>{% endif %}
+{% if order.gateway_payment_id and order.verified_at %}
+<p><strong>Payment reference:</strong> {{ order.gateway_payment_id }}</p>
+<p><strong>Verified on:</strong> {{ order.verified_at|date:"d M Y, h:i A" }}</p>
+{% else %}
+<p class="subtle">Enrollment was approved manually. Online payment details are not available for this order.</p>
+{% endif %}
+<p class="subtle">This is an order confirmation, not a GST tax invoice.</p>
+</article><aside class="details-panel">
+<a class="button button-primary full-width" href="{% url 'dashboard' %}">Back to My Courses</a>
+</aside></div></section>
+{% endblock %}

@@ -1,6 +1,8 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
+
+from .storage import private_storage
 
 
 class Category(models.Model):
@@ -25,7 +27,11 @@ class Course(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True)
     summary = models.CharField(max_length=320)
+    seo_title = models.CharField(max_length=160, blank=True)
+    seo_description = models.CharField(max_length=320, blank=True)
     description = models.TextField()
+    instructor_name = models.CharField(max_length=160, blank=True)
+    learning_outcomes = models.TextField(blank=True, help_text="One outcome per line")
     thumbnail = models.ImageField(upload_to="courses/", blank=True)
     mode = models.CharField(max_length=12, choices=Mode.choices, default=Mode.RECORDED)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
@@ -43,3 +49,134 @@ class Course(models.Model):
 
     def get_absolute_url(self):
         return reverse("course_detail", kwargs={"slug": self.slug})
+
+
+class Chapter(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="chapters")
+    title = models.CharField(max_length=180)
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return f"{self.course.title} - {self.title}"
+
+
+class Lesson(models.Model):
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name="lessons")
+    title = models.CharField(max_length=180)
+    position = models.PositiveIntegerField(default=0)
+    video_url = models.URLField(blank=True)
+    notes = models.FileField(
+        upload_to="lesson-notes/",
+        storage=private_storage,
+        blank=True,
+        validators=[FileExtensionValidator(["pdf"])],
+    )
+    is_published = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return self.title
+
+
+class StudyMaterial(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="materials")
+    title = models.CharField(max_length=180)
+    description = models.CharField(max_length=350, blank=True)
+    file = models.FileField(
+        upload_to="course-materials/",
+        storage=private_storage,
+        validators=[FileExtensionValidator(["pdf"])],
+    )
+    is_published = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return self.title
+
+
+class CourseCertificate(models.Model):
+    enrollment = models.OneToOneField(
+        "courses.Enrollment", on_delete=models.CASCADE, related_name="certificate",
+    )
+    issued_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-issued_at"]
+
+    @property
+    def number(self):
+        return f"SCG-{self.pk:08d}"
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PAID = "paid", "Paid"
+        CANCELLED = "cancelled", "Cancelled"
+
+    student = models.ForeignKey("accounts.User", on_delete=models.PROTECT, related_name="course_orders")
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name="orders")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    gateway_order_id = models.CharField(max_length=70, blank=True, null=True, unique=True)
+    gateway_payment_id = models.CharField(max_length=70, blank=True, null=True, unique=True)
+    verified_at = models.DateTimeField(blank=True, null=True)
+    refunded_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    refund_checked_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["student", "course"], name="unique_student_course_order"),
+            models.CheckConstraint(condition=models.Q(refunded_amount__gte=0), name="order_refund_nonnegative"),
+            models.CheckConstraint(condition=models.Q(refunded_amount__lte=models.F("amount")), name="order_refund_lte_amount"),
+        ]
+
+    @property
+    def net_amount(self):
+        return self.amount - self.refunded_amount
+
+    @property
+    def fully_refunded(self):
+        return self.status == self.Status.PAID and self.refund_checked_at is not None and (
+            self.refunded_amount >= self.amount
+        )
+
+    def __str__(self):
+        return f"Order #{self.pk} - {self.course.title}"
+
+
+class Enrollment(models.Model):
+    student = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="enrollments")
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name="enrollments")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["student", "course"], name="unique_course_enrollment")]
+
+    def __str__(self):
+        return f"{self.student} - {self.course}"
+
+
+class LessonProgress(models.Model):
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name="completed_lessons")
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="completions")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["enrollment", "lesson"], name="unique_lesson_completion")]
+
+    def __str__(self):
+        return f"{self.enrollment} - {self.lesson}"

@@ -1,0 +1,37 @@
+name: Browser Tests
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [main, development]
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    runs-on: ubuntu-24.04
+    env:
+      DEBUG: "True"
+      DB_ENGINE: sqlite
+      RUN_BROWSER_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install 'playwright>=1.55,<2'
+          python -m playwright install --with-deps chromium
+      - name: Run browser tests
+        run: python manage.py test ui_tests
+      - name: Upload management UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scs-gyan-management-ui-review
+          path: management-review/
+          if-no-files-found: ignore
+          retention-days: 14

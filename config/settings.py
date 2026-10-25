@@ -15,15 +15,18 @@ if not DEBUG and SECRET_KEY == "local-development-only-change-me":
     raise RuntimeError("Set SECRET_KEY before running outside development.")
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
     "accounts",
     "courses",
+    "exams",
+    "articles",
     "pages",
+    "management",
 ]
 
 MIDDLEWARE = [
@@ -47,6 +50,7 @@ TEMPLATES = [{
             "django.template.context_processors.request",
             "django.contrib.auth.context_processors.auth",
             "django.contrib.messages.context_processors.messages",
+            "config.seo.canonical_context",
         ],
     },
 }]
@@ -86,6 +90,7 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
@@ -99,3 +104,26 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").lower() == "true"
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
+        "SECURE_HSTS_INCLUDE_SUBDOMAINS", "False"
+    ).lower() == "true"
+    SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "False").lower() == "true"
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+    if os.getenv("TRUST_REVERSE_PROXY_HTTPS", "False").lower() == "true":
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
+
+# Enable recovery only after SMTP has been configured and a test email received.
+PASSWORD_RESET_ENABLED = os.getenv("PASSWORD_RESET_ENABLED", "False").lower() == "true"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_TIMEOUT = 15
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@example.org")

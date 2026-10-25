@@ -1,0 +1,16 @@
+{% extends "management/base.html" %}
+{% block title %}Course Reports{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">REPORTING</p><h1>Course performance</h1>
+    <p>Gateway-verified captured payments minus recorded refunds. Excludes manual approvals, taxes and provider fees.</p>
+  </div></div>
+  <section class="manage-panel"><div class="manage-table-wrap"><table>
+    <thead><tr><th>Course</th><th>Active students</th><th>Lessons</th><th>PDFs</th><th>Pending</th><th>Payments</th><th>Captured ₹</th><th>Refunds ₹</th><th>Net ₹</th></tr></thead>
+    <tbody>{% for row in rows %}
+    <tr><td>{{ row.course.title }}</td><td>{{ row.active_students }}</td><td>{{ row.published_lessons }}</td>
+      <td>{{ row.published_materials }}</td><td>{{ row.pending_orders }}</td><td>{{ row.captured_payments }}</td>
+      <td>{{ row.captured_value|floatformat:2 }}</td><td>{{ row.recorded_refunds|floatformat:2 }}</td>
+      <td>{{ row.net_recorded_value|floatformat:2 }}</td></tr>
+    {% empty %}<tr><td colspan="9">No courses yet.</td></tr>{% endfor %}</tbody>
+  </table></div></section>
+{% endblock %}

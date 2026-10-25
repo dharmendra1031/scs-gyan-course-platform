@@ -1,8 +1,18 @@
 <article class="course-card">
   <a href="{{ course.get_absolute_url }}" aria-label="View {{ course.title }}">
-    <div class="course-cover">
-      {% if course.thumbnail %}<img src="{{ course.thumbnail.url }}" alt="" loading="lazy">{% else %}<span class="cover-decoration" aria-hidden="true">✦</span><span>LEARN WITH SCS GYAN</span>{% endif %}
+    <div class="course-cover course-cover--{{ course.category.slug }}">
+      {% if course.thumbnail %}
+        <img src="{{ course.thumbnail.url }}" alt="" loading="lazy">
+      {% else %}
+        <span class="course-cover-label">{{ course.category.name }}</span>
+        <span class="course-cover-symbol" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 9C14 5 8 5 3 7v23c6-2 12-1 17 3 5-4 11-5 17-3V7C31 5 26 5 20 9Z"/><path d="M20 9v24M8 13c3-1 6-1 8 0m8 0c3-1 6-1 9 0M8 19c3-1 6-1 8 0m8 0c3-1 6-1 9 0"/></svg></span>
+      {% endif %}
     </div>
   </a>
-  <div class="course-body"><span class="eyebrow">{{ course.category.name }} · {{ course.get_mode_display }}</span><h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3><p>{{ course.summary }}</p><div class="course-bottom"><strong>₹{{ course.price|floatformat:0 }}</strong><a href="{{ course.get_absolute_url }}">View Course <span aria-hidden="true">→</span></a></div></div>
+  <div class="course-body">
+    <span class="eyebrow">{{ course.category.name }} · {{ course.get_mode_display }}</span>
+    <h3><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></h3>
+    <p>{{ course.summary }}</p>
+    <div class="course-bottom"><strong>{% if course.price == 0 %}Free{% else %}₹{{ course.price|floatformat:0 }}{% endif %}</strong><a href="{{ course.get_absolute_url }}">View Course <span aria-hidden="true">→</span></a></div>
+  </div>
 </article>

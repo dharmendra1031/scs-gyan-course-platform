@@ -1,0 +1,28 @@
+{% extends "management/base.html" %}
+{% block title %}Enquiry #{{ enquiry.pk }}{% endblock %}
+{% block content %}
+  <div class="manage-title"><div><p class="manage-eyebrow">STUDENT SUPPORT</p>
+    <h1>Enquiry #{{ enquiry.pk }}</h1><p>{{ enquiry.created_at|date:"d M Y, h:i A" }}</p>
+  </div><a href="{% url 'management:enquiries' %}">Back to enquiries</a></div>
+  <div class="manage-columns">
+    <section class="manage-panel">
+      <h2>{{ enquiry.subject }}</h2>
+      <p><strong>From:</strong> {{ enquiry.name }} ({{ enquiry.email }})</p>
+      <p>{{ enquiry.message|linebreaksbr }}</p>
+    </section>
+    <section class="manage-panel">
+      <h2>Follow-up</h2>
+      <form method="post" novalidate>{% csrf_token %}
+        {% if form.non_field_errors %}<div class="manage-errors">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}
+        <div class="manage-field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="manage-errors">{{ field.errors }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="manage-button">Save follow-up</button>
+      </form>
+    </section>
+  </div>
+{% endblock %}

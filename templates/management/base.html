@@ -1,0 +1,72 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{% block title %}Management{% endblock %} | SCS Gyan</title>
+  <link rel="stylesheet" href="{% static 'css/management.css' %}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="manage-shell">
+    <aside class="manage-sidebar">
+      <a class="manage-logo" href="{% url 'management:dashboard' %}">
+        <span class="manage-mark">S</span>
+        <span>SCS <strong>GYAN</strong><small>Management</small></span>
+      </a>
+      <button class="manage-nav-toggle" type="button" aria-controls="manage-nav" aria-expanded="false">Management Menu ▾</button>
+      <nav id="manage-nav" aria-label="Management">
+        <a href="{% url 'management:dashboard' %}">Overview</a>
+        <span class="manage-label">Learning content</span>
+        <a href="{% url 'management:list' 'categories' %}">Categories</a>
+        <a href="{% url 'management:list' 'courses' %}">Courses</a>
+        <a href="{% url 'management:list' 'chapters' %}">Chapters</a>
+        <a href="{% url 'management:list' 'lessons' %}">Lessons</a>
+        <a href="{% url 'management:list' 'materials' %}">Study Materials</a>
+        <a href="{% url 'management:list' 'articles' %}">Articles</a>
+        <span class="manage-label">Assessments</span>
+        <a href="{% url 'management:list' 'assessments' %}">Quizzes & Tests</a>
+        <a href="{% url 'management:list' 'questions' %}">Questions</a>
+        <a href="{% url 'management:list' 'choices' %}">Answer Choices</a>
+        <a href="{% url 'management:results' %}">Performance</a>
+        <span class="manage-label">Operations</span>
+        <a href="{% url 'management:orders' %}">Orders & Refunds</a>
+        <a href="{% url 'management:reports' %}">Reports</a>
+        <a href="{% url 'management:students' %}">Students</a>
+        <a href="{% url 'management:enquiries' %}">Enquiries</a>
+      </nav>
+    </aside>
+    <div class="manage-content">
+      <header class="manage-header">
+        <strong>SCS Gyan Control Centre</strong>
+        <div class="manage-header-actions">
+          <a href="{% url 'home' %}">View website</a>
+          <span>{{ request.user.username }}</span>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+            <button type="submit" class="manage-link">Sign out</button>
+          </form>
+        </div>
+      </header>
+      <main class="manage-main" id="main">
+        {% if messages %}
+          <div role="status">
+          {% for message in messages %}<p class="manage-notice">{{ message }}</p>{% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <script>
+    const menu = document.querySelector(".manage-nav-toggle");
+    const nav = document.querySelector("#manage-nav");
+    menu.addEventListener("click", () => {
+      const open = menu.getAttribute("aria-expanded") !== "true";
+      menu.setAttribute("aria-expanded", String(open));
+      nav.classList.toggle("is-open", open);
+    });
+  </script>
+</body>
+</html>

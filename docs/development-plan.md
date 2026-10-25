@@ -74,3 +74,16 @@ A full feature-equivalent Drishti-scale platform, including dedicated native app
 ## Current status
 
 Code package created locally; not pushed to GitHub. UI concept screenshots made via Playwright using an HTML prototype. Python syntax and JSON fixture were checked. The environment could not download/install Django, therefore Django tests and database migrations have **not** run. SQL Server, payment integration and deployment are not complete.
+
+
+## Phase 2 progress (development branch)
+
+- Chapters and lessons can be managed through Django Admin.
+- Student enrollment for free courses is immediate; paid course requests create **pending** orders only.
+- A trusted admin can approve an order **after independently verifying payment**; approval is idempotent.
+- Enrolled students can view published lessons, download access-controlled PDF notes, and track completion.
+- Student and administrator access use Django session authentication and built-in staff/permission controls.
+- PDF notes are stored outside public MEDIA_ROOT under PRIVATE_MEDIA_ROOT; deploy with private storage and backups.
+- External video links are **not** DRM protected. Never use a public URL for confidential video assets.
+- **Not implemented:** payment gateway, payment webhooks, refunds, coupons, teacher roles, video DRM, SQL Server live integration and production deployment.
+- **Required testing:** Django CI (SQLite), SQL Server/ODBC integration, real admin manual-approval flow, browser and security acceptance.
