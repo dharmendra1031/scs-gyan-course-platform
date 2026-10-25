@@ -1,3 +1,4 @@
+import django.utils.timezone
 from django.db import migrations, models
 
 
@@ -26,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="contactenquiry",
             name="updated_at",
-            field=models.DateTimeField(auto_now=True, null=True),
+            field=models.DateTimeField(auto_now=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
     ]
