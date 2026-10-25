@@ -29,7 +29,7 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
                     page.wait_for_url("**/management/content/courses/")
                     page.get_by_role("link", name="Add new").click()
                     page.wait_for_url("**/management/content/courses/new/")
-                    assert page.get_by_label("Title").is_visible()
+                    assert page.get_by_role("textbox", name="Title", exact=True).is_visible()
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 2")
                     page.close()
             finally:
