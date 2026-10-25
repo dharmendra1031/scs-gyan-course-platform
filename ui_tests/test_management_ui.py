@@ -29,6 +29,12 @@ class ManagementBrowserTests(StaticLiveServerTestCase):
                     page.wait_for_url("**/management/")
                     assert "Welcome back" in page.locator("h1").inner_text()
                     page.screenshot(path=str(output / f"dashboard-{width}.png"), full_page=True)
+                    if width < 740:
+                        toggle = page.get_by_role("button", name="Management Menu")
+                        assert toggle.get_attribute("aria-expanded") == "false"
+                        toggle.click()
+                        assert toggle.get_attribute("aria-expanded") == "true"
+                        page.screenshot(path=str(output / f"menu-{width}.png"), full_page=True)
                     page.get_by_role("navigation", name="Management").get_by_role("link", name="Courses").click()
                     page.wait_for_url("**/management/content/courses/")
                     page.screenshot(path=str(output / f"courses-{width}.png"), full_page=True)

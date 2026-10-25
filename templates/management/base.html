@@ -16,7 +16,8 @@
         <span class="manage-mark">S</span>
         <span>SCS <strong>GYAN</strong><small>Management</small></span>
       </a>
-      <nav aria-label="Management">
+      <button class="manage-nav-toggle" type="button" aria-controls="manage-nav" aria-expanded="false">Management Menu ▾</button>
+      <nav id="manage-nav" aria-label="Management">
         <a href="{% url 'management:dashboard' %}">Overview</a>
         <span class="manage-label">Learning content</span>
         <a href="{% url 'management:list' 'categories' %}">Categories</a>
@@ -58,5 +59,14 @@
       </main>
     </div>
   </div>
+  <script>
+    const menu = document.querySelector(".manage-nav-toggle");
+    const nav = document.querySelector("#manage-nav");
+    menu.addEventListener("click", () => {
+      const open = menu.getAttribute("aria-expanded") !== "true";
+      menu.setAttribute("aria-expanded", String(open));
+      nav.classList.toggle("is-open", open);
+    });
+  </script>
 </body>
 </html>
