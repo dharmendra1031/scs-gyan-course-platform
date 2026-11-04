@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from articles.models import Article
 from courses.models import Category, Course, Order
-from exams.models import Assessment, Choice, Question
+from exams.models import Assessment, Attempt, Choice, Question
 from pages.models import ContactEnquiry
 
 
@@ -115,6 +115,90 @@ class ManagementAccessTests(TestCase):
         self.assertRedirects(self.client.post(url, payload),
                              reverse("management:list", args=["assessments"]))
         self.assertTrue(Assessment.objects.get(pk=assessment.pk).is_published)
+
+
+    def test_published_question_cannot_be_edited_or_moved(self):
+        self.client.force_login(self.owner)
+        published = Assessment.objects.create(
+            course=self.course, title="Live test", is_published=True,
+        )
+        draft = Assessment.objects.create(course=self.course, title="Draft test")
+        question = Question.objects.create(assessment=published, text="Original?", marks=2)
+        Choice.objects.create(question=question, text="Yes", is_correct=True)
+        Choice.objects.create(question=question, text="No")
+
+        url = reverse("management:edit", args=["questions", question.pk])
+        data = {
+            "assessment": published.pk, "text": "Changed?", "position": 0,
+            "marks": 5, "explanation": "",
+        }
+        self.assertContains(
+            self.client.post(url, data),
+            "Unpublish the assessment before editing its questions.",
+        )
+        data["assessment"] = draft.pk
+        self.assertContains(
+            self.client.post(url, data),
+            "Unpublish the assessment before editing its questions.",
+        )
+        question.refresh_from_db()
+        self.assertEqual(
+            (question.assessment_id, question.text, question.marks),
+            (published.pk, "Original?", 2),
+        )
+
+        create_url = reverse("management:create", args=["questions"])
+        self.assertContains(self.client.post(create_url, {
+            "assessment": published.pk, "text": "Another?",
+            "position": 0, "marks": 1, "explanation": "",
+        }), "Unpublish the assessment before editing its questions.")
+        self.assertEqual(Question.objects.filter(assessment=published).count(), 1)
+
+        self.assertRedirects(self.client.post(create_url, {
+            "assessment": draft.pk, "text": "Draft question",
+            "position": 0, "marks": 1, "explanation": "",
+        }), reverse("management:list", args=["questions"]))
+
+    def test_published_choice_cannot_be_moved_to_draft(self):
+        self.client.force_login(self.owner)
+        published = Assessment.objects.create(
+            course=self.course, title="Published", is_published=True,
+        )
+        draft = Assessment.objects.create(course=self.course, title="Draft")
+        question = Question.objects.create(assessment=published, text="Published question")
+        target = Question.objects.create(assessment=draft, text="Draft question")
+        answer = Choice.objects.create(question=question, text="Correct", is_correct=True)
+        Choice.objects.create(question=question, text="Wrong")
+
+        url = reverse("management:edit", args=["choices", answer.pk])
+        self.assertContains(self.client.post(url, {
+            "question": target.pk, "text": "Changed", "is_correct": "on",
+        }), "Unpublish the assessment before editing its answers.")
+        answer.refresh_from_db()
+        self.assertEqual((answer.question_id, answer.text), (question.pk, "Correct"))
+
+    def test_zero_duration_and_started_test_changes_are_blocked(self):
+        self.client.force_login(self.owner)
+        assessment = Assessment.objects.create(course=self.course, title="Timed test")
+        url = reverse("management:edit", args=["assessments", assessment.pk])
+        data = {
+            "course": self.course.pk, "title": assessment.title,
+            "kind": "quiz", "duration_minutes": 0,
+        }
+        self.assertContains(
+            self.client.post(url, data), "Duration must be at least one minute.",
+        )
+        assessment.refresh_from_db()
+        self.assertEqual(assessment.duration_minutes, 30)
+
+        Attempt.objects.create(assessment=assessment, student=self.student)
+        data["duration_minutes"] = 60
+        self.assertContains(
+            self.client.post(url, data),
+            "Course, date and duration cannot change after a student starts a test.",
+        )
+        assessment.refresh_from_db()
+        self.assertEqual(assessment.duration_minutes, 30)
 
     def test_article_editor(self):
         self.client.force_login(self.owner)
