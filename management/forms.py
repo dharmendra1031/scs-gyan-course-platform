@@ -75,8 +75,23 @@ class AssessmentForm(forms.ModelForm):
         fields = ("course", "title", "kind", "daily_date", "duration_minutes", "is_published")
         widgets = {"daily_date": forms.DateInput(attrs={"type": "date"})}
 
+    def clean_duration_minutes(self):
+        minutes = self.cleaned_data["duration_minutes"]
+        if minutes < 1:
+            raise forms.ValidationError("Duration must be at least one minute.")
+        return minutes
+
     def clean(self):
         data = super().clean()
+        if (
+            self.instance.pk
+            and self.instance.attempts.exists()
+            and any(field in self.changed_data for field in
+                    ("course", "kind", "daily_date", "duration_minutes"))
+        ):
+            raise forms.ValidationError(
+                "Course, date and duration cannot change after a student starts a test."
+            )
         if data.get("kind") == Assessment.Kind.DAILY and not data.get("daily_date"):
             self.add_error("daily_date", "Daily quizzes require a date.")
         if data.get("is_published"):
@@ -101,6 +116,20 @@ class QuestionForm(forms.ModelForm):
         model = Question
         fields = ("assessment", "text", "position", "marks", "explanation")
 
+    def clean(self):
+        data = super().clean()
+        assessment = data.get("assessment")
+        if (
+            (assessment and assessment.is_published)
+            or (self.instance.pk and Assessment.objects.filter(
+                pk=self.instance.assessment_id, is_published=True
+            ).exists())
+        ):
+            raise forms.ValidationError(
+                "Unpublish the assessment before editing its questions."
+            )
+        return data
+
     def clean_marks(self):
         marks = self.cleaned_data["marks"]
         if marks < 1:
@@ -116,8 +145,15 @@ class ChoiceForm(forms.ModelForm):
     def clean(self):
         data = super().clean()
         question = data.get("question")
-        if question and question.assessment.is_published:
-            raise forms.ValidationError("Unpublish the assessment before editing its answers.")
+        if (
+            (question and question.assessment.is_published)
+            or (self.instance.pk and Question.objects.filter(
+                pk=self.instance.question_id, assessment__is_published=True
+            ).exists())
+        ):
+            raise forms.ValidationError(
+                "Unpublish the assessment before editing its answers."
+            )
         if question and data.get("is_correct"):
             others = Choice.objects.filter(question=question, is_correct=True)
             if self.instance.pk:
