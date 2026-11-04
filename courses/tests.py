@@ -39,6 +39,14 @@ class CoursePagesTests(TestCase):
         self.assertContains(response, "UPSC Foundation")
         self.assertEqual(len(response.context["courses"]), 1)
 
+    def test_search_limits_input_length(self):
+        response = self.client.get(reverse("course_list"), {
+            "q": "a" * 500, "category": "b" * 500,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["search"]), 100)
+        self.assertEqual(len(response.context["current_category"]), 130)
+
 
 class EnrollmentTests(TestCase):
     @classmethod
