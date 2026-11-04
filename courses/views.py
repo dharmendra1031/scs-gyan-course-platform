@@ -22,8 +22,8 @@ class CourseListView(ListView):
 
     def get_queryset(self):
         queryset = Course.objects.filter(is_published=True).select_related("category")
-        category = self.request.GET.get("category", "").strip()
-        search = self.request.GET.get("q", "").strip()
+        category = self.request.GET.get("category", "").strip()[:130]
+        search = self.request.GET.get("q", "").strip()[:100]
         if category:
             queryset = queryset.filter(category__slug=category)
         if search:
@@ -33,8 +33,8 @@ class CourseListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["categories"] = Category.objects.all()
-        context["current_category"] = self.request.GET.get("category", "")
-        context["search"] = self.request.GET.get("q", "")
+        context["current_category"] = self.request.GET.get("category", "").strip()[:130]
+        context["search"] = self.request.GET.get("q", "").strip()[:100]
         return context
 
 
