@@ -15,10 +15,11 @@
       <p>Create your free student account.</p>
       <form method="post">
         {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
         <div class="form-fields">{{ form.as_div }}</div>
         <button class="button button-primary full-width" type="submit">Create Account</button>
       </form>
-      <p>Already registered? <a href="{% url 'login' %}">Sign in</a></p>
+      <p>Already registered? <a href="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Sign in</a></p>
     </div>
   </div>
 </section>
