@@ -1,9 +1,25 @@
 from django import forms
+from django.core.files.uploadedfile import UploadedFile
 from django.utils.text import slugify
 
 from articles.models import Article
 from courses.models import Category, Chapter, Course, Lesson, StudyMaterial
 from exams.models import Assessment, Choice, Question
+
+
+MAX_PDF_SIZE = 20 * 1024 * 1024
+
+
+def validate_pdf_upload(file):
+    if isinstance(file, UploadedFile):
+        if file.size > MAX_PDF_SIZE:
+            raise forms.ValidationError("PDF must be 20 MB or smaller.")
+        try:
+            if file.read(5) != b"%PDF-":
+                raise forms.ValidationError("Choose a valid PDF document.")
+        finally:
+            file.seek(0)
+    return file
 
 
 class CategoryForm(forms.ModelForm):
@@ -43,11 +59,17 @@ class LessonForm(forms.ModelForm):
         model = Lesson
         fields = ("chapter", "title", "position", "video_url", "notes", "is_published")
 
+    def clean_notes(self):
+        return validate_pdf_upload(self.cleaned_data.get("notes"))
+
 
 class MaterialForm(forms.ModelForm):
     class Meta:
         model = StudyMaterial
         fields = ("course", "title", "description", "file", "is_published")
+
+    def clean_file(self):
+        return validate_pdf_upload(self.cleaned_data.get("file"))
 
 
 class ArticleForm(forms.ModelForm):
