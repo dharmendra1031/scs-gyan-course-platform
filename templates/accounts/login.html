@@ -21,7 +21,7 @@
         <button class="button button-primary full-width" type="submit">Sign In</button>
       </form>
       {% if password_reset_enabled %}<p><a href="{% url 'password_reset' %}">Forgot password?</a></p>{% endif %}
-      <p>New here? <a href="{% url 'signup' %}">Create an account</a></p>
+      <p>New here? <a href="{% url 'signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Create an account</a></p>
     </div>
   </div>
 </section>
