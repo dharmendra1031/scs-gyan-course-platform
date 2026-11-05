@@ -41,7 +41,7 @@ class AccountTests(TestCase):
         response = self.client.get(reverse("signup"), {
             "next": "/courses/example-course/",
         })
-        self.assertContains(response, "next=%2Fcourses%2Fexample-course%2F")
+        self.assertContains(response, "next=/courses/example-course/")
 
     def test_duplicate_email_is_rejected(self):
         get_user_model().objects.create_user(username="existing", email="student@example.com", password="StrongPassword!234")
