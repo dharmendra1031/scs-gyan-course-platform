@@ -7,7 +7,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import never_cache
 
-from courses.models import Enrollment, Order
+from courses.models import Enrollment, Lesson, LessonProgress, Order
 from courses.payments import gateway_enabled
 from .models import StudentNotification
 
@@ -37,21 +37,39 @@ def signup(request):
 
 @login_required
 def dashboard(request):
-    enrollments = Enrollment.objects.filter(
-        student=request.user, is_active=True,
-    ).select_related("course").annotate(
-        completed_count=Count(
-            "completed_lessons",
-            filter=Q(completed_lessons__lesson__is_published=True), distinct=True,
-        ),
-        lesson_count=Count(
-            "course__chapters__lessons",
-            filter=Q(course__chapters__lessons__is_published=True), distinct=True,
-        ),
+    enrollments = list(
+        Enrollment.objects.filter(
+            student=request.user, is_active=True,
+        ).select_related("course").annotate(
+            completed_count=Count(
+                "completed_lessons",
+                filter=Q(completed_lessons__lesson__is_published=True), distinct=True,
+            ),
+            lesson_count=Count(
+                "course__chapters__lessons",
+                filter=Q(course__chapters__lessons__is_published=True), distinct=True,
+            ),
+        ).order_by("-created_at")
     )
+    resume_course = next(
+        (item for item in enrollments if item.completed_count < item.lesson_count),
+        None,
+    )
+    next_lesson = None
+    if resume_course:
+        completed = LessonProgress.objects.filter(
+            enrollment=resume_course,
+        ).values("lesson_id")
+        next_lesson = Lesson.objects.filter(
+            chapter__course=resume_course.course, is_published=True,
+        ).exclude(pk__in=completed).order_by(
+            "chapter__position", "chapter__id", "position", "id",
+        ).first()
+
     orders = Order.objects.filter(student=request.user).select_related("course")
     return render(request, "accounts/dashboard.html", {
         "enrollments": enrollments, "orders": orders,
+        "resume_course": resume_course, "next_lesson": next_lesson,
         "payments_enabled": gateway_enabled(),
     })
 
