@@ -129,6 +129,12 @@ class Order(models.Model):
     gateway_order_id = models.CharField(max_length=70, blank=True, null=True, unique=True)
     gateway_payment_id = models.CharField(max_length=70, blank=True, null=True, unique=True)
     verified_at = models.DateTimeField(blank=True, null=True)
+    manual_payment_reference = models.CharField(max_length=120, blank=True)
+    manual_verified_at = models.DateTimeField(blank=True, null=True)
+    manual_verified_by = models.ForeignKey(
+        "accounts.User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="approved_course_orders",
+    )
     refunded_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     refund_checked_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
