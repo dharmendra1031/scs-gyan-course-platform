@@ -9,6 +9,7 @@ urlpatterns = [
     path("content/<slug:resource>/new/", views.content_form, name="create"),
     path("content/<slug:resource>/<int:pk>/edit/", views.content_form, name="edit"),
     path("orders/", views.orders, name="orders"),
+    path("orders/<int:pk>/review/", views.approval_review, name="approval_review"),
     path("orders/<int:pk>/<slug:action>/", views.order_action, name="order_action"),
     path("reports/", views.reports, name="reports"),
     path("enquiries/", views.enquiries, name="enquiries"),
