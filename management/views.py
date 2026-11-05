@@ -75,9 +75,13 @@ def content_list(request, resource):
         entries = entries.filter(predicate)
     from django.core.paginator import Paginator
     page = Paginator(entries.order_by("-pk"), 25).get_page(request.GET.get("page"))
+    show_status = resource in ("courses", "lessons", "materials", "articles", "assessments")
+    show_course = resource == "materials"
     return render(request, "management/list.html", {
         "heading": config.label, "resource": resource,
         "page": page, "query": query, "now": timezone.now(),
+        "show_status": show_status, "show_course": show_course,
+        "column_count": 3 + int(show_status) + int(show_course),
     })
 
 
