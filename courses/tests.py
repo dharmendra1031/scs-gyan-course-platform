@@ -85,10 +85,57 @@ class EnrollmentTests(TestCase):
         self.assertEqual(order.amount, Decimal("599.00"))
         self.assertEqual(self.client.get(reverse("course_learn", args=[self.course.slug])).status_code, 404)
 
-        approve_order(order.pk)
-        approve_order(order.pk)
+        from django.contrib.auth import get_user_model
+        owner = get_user_model().objects.create_superuser(
+            username="manual_owner", email="manual-owner@example.com",
+            password="AdminPassword123!",
+        )
+        approve_order(order.pk, reference="BANK-TXN-1234", approved_by=owner)
+        approve_order(order.pk, reference="BANK-TXN-1234", approved_by=owner)
         self.assertEqual(Enrollment.objects.filter(student=self.user, course=self.course).count(), 1)
+        order.refresh_from_db()
+        self.assertEqual(order.manual_payment_reference, "BANK-TXN-1234")
+        self.assertEqual(order.manual_verified_by_id, owner.pk)
         self.assertEqual(self.client.get(reverse("course_learn", args=[self.course.slug])).status_code, 200)
+
+    def test_manual_approval_requires_owner_and_payment_reference(self):
+        from django.contrib.auth import get_user_model
+        from .models import Enrollment, Order
+        from .services import approve_order
+
+        order = Order.objects.create(
+            student=self.user, course=self.course, amount=self.course.price,
+        )
+        owner = get_user_model().objects.create_superuser(
+            username="reference_owner", email="ref-owner@example.com",
+            password="AdminPassword123!",
+        )
+        with self.assertRaises(ValueError):
+            approve_order(order.pk, reference="TXN-12345", approved_by=self.user)
+        with self.assertRaises(ValueError):
+            approve_order(order.pk, approved_by=owner)
+        self.assertFalse(Enrollment.objects.filter(student=self.user).exists())
+        approve_order(order.pk, reference="TXN-12345", approved_by=owner)
+        order.refresh_from_db()
+        self.assertEqual(order.status, Order.Status.PAID)
+        self.assertIsNotNone(order.manual_verified_at)
+
+    def test_gateway_pending_order_cannot_be_approved_manually(self):
+        from django.contrib.auth import get_user_model
+        from .models import Enrollment, Order
+        from .services import approve_order
+
+        order = Order.objects.create(
+            student=self.user, course=self.course, amount=self.course.price,
+            gateway_order_id="order_pending_gateway",
+        )
+        owner = get_user_model().objects.create_superuser(
+            username="gateway_owner", email="gateway-owner@example.com",
+            password="AdminPassword123!",
+        )
+        with self.assertRaises(ValueError):
+            approve_order(order.pk, reference="BANK-12345", approved_by=owner)
+        self.assertFalse(Enrollment.objects.filter(student=self.user).exists())
 
     def test_free_course_enrollment_is_idempotent(self):
         from .models import Enrollment
