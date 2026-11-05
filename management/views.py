@@ -109,6 +109,18 @@ def orders(request):
 
 
 @owner_only
+def approval_review(request, pk):
+    order = get_object_or_404(
+        Order.objects.select_related("student", "course"),
+        pk=pk, status=Order.Status.PENDING,
+    )
+    return render(request, "management/order_approval.html", {
+        "order": order,
+        "gateway_started": bool(order.gateway_order_id or order.gateway_payment_id),
+    })
+
+
+@owner_only
 @require_POST
 def order_action(request, pk, action):
     order = get_object_or_404(Order, pk=pk)
@@ -116,15 +128,25 @@ def order_action(request, pk, action):
         if action == "approve":
             if order.status != Order.Status.PENDING:
                 raise ValueError("Only pending orders can be approved.")
-            approve_order(order.pk)
-            messages.success(request, f"Order #{pk} approved.")
+            if request.POST.get("confirm_payment") != "yes":
+                raise ValueError("Confirm that you checked the external payment evidence.")
+            approve_order(
+                order.pk,
+                reference=request.POST.get("payment_reference", ""),
+                approved_by=request.user,
+            )
+            messages.success(request, f"Order #{pk} approved. Evidence recorded.")
         elif action == "reconcile":
             reconcile_from_gateway(order.pk)
-            messages.success(request, f"Order #{pk} refund status updated.")
+            messages.success(request, f"Order #{pk} provider refund status checked.")
         else:
             raise Http404("Unknown action")
-    except (ValueError, PaymentError):
-        messages.error(request, "Could not process this order. Check payment state or provider credentials.")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        if action == "approve" and order.status == Order.Status.PENDING:
+            return redirect("management:approval_review", pk=pk)
+    except PaymentError:
+        messages.error(request, "Payment provider unavailable. Please try again later.")
     return redirect("management:orders")
 
 
