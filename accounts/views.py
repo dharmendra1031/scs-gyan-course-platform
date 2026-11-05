@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import never_cache
 
@@ -14,16 +15,24 @@ from .forms import SignupForm
 
 
 def signup(request):
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    if not url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        next_url = ""
+
     if request.user.is_authenticated:
-        return redirect("dashboard")
+        return redirect(next_url or "dashboard")
 
     form = SignupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
         login(request, user)
-        return redirect("dashboard")
+        return redirect(next_url or "dashboard")
 
-    return render(request, "accounts/signup.html", {"form": form})
+    return render(request, "accounts/signup.html", {
+        "form": form, "next": next_url,
+    })
 
 
 @login_required
