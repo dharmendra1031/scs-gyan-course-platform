@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
@@ -228,6 +229,30 @@ class ManagementAccessTests(TestCase):
         )
         assessment.refresh_from_db()
         self.assertEqual(assessment.duration_minutes, 30)
+
+    def test_study_material_rejects_non_pdf_content_and_oversize_files(self):
+        from .forms import MaterialForm, MAX_PDF_SIZE
+
+        data = {
+            "course": self.course.pk,
+            "title": "Reference Notes",
+            "description": "",
+            "is_published": "on",
+        }
+        invalid_file = SimpleUploadedFile(
+            "reference.pdf", b"not a real PDF", content_type="application/pdf",
+        )
+        invalid = MaterialForm(data=data, files={"file": invalid_file})
+        self.assertFalse(invalid.is_valid())
+        self.assertIn("Choose a valid PDF document.", str(invalid.errors))
+
+        oversized_file = SimpleUploadedFile(
+            "oversized.pdf", b"%PDF-1.4\n", content_type="application/pdf",
+        )
+        oversized_file.size = MAX_PDF_SIZE + 1
+        oversized = MaterialForm(data=data, files={"file": oversized_file})
+        self.assertFalse(oversized.is_valid())
+        self.assertIn("PDF must be 20 MB or smaller.", str(oversized.errors))
 
     def test_article_editor(self):
         self.client.force_login(self.owner)
