@@ -17,6 +17,32 @@ class AccountTests(TestCase):
         self.assertRedirects(response, reverse("dashboard"))
         self.assertTrue(get_user_model().objects.filter(email="student@example.com").exists())
 
+    def test_signup_returns_student_to_requested_course(self):
+        course_url = "/courses/example-course/"
+        response = self.client.post(reverse("signup"), {
+            "username": "course_student", "email": "course@example.com",
+            "first_name": "Course", "last_name": "Student",
+            "password1": "StrongPassword!234", "password2": "StrongPassword!234",
+            "next": course_url,
+        })
+        self.assertRedirects(response, course_url, fetch_redirect_response=False)
+        self.assertTrue(get_user_model().objects.filter(username="course_student").exists())
+
+    def test_signup_rejects_external_next_redirect(self):
+        response = self.client.post(reverse("signup"), {
+            "username": "safe_student", "email": "safe@example.com",
+            "first_name": "Safe", "last_name": "Student",
+            "password1": "StrongPassword!234", "password2": "StrongPassword!234",
+            "next": "https://evil.example/steal",
+        })
+        self.assertRedirects(response, reverse("dashboard"))
+
+    def test_signup_keeps_safe_next_for_login_link(self):
+        response = self.client.get(reverse("signup"), {
+            "next": "/courses/example-course/",
+        })
+        self.assertContains(response, "next=%2Fcourses%2Fexample-course%2F")
+
     def test_duplicate_email_is_rejected(self):
         get_user_model().objects.create_user(username="existing", email="student@example.com", password="StrongPassword!234")
         response = self.client.post(reverse("signup"), {
