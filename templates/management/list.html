@@ -11,12 +11,19 @@
       <button type="submit" class="manage-button">Search</button>
     </form>
     <div class="manage-table-wrap"><table>
-      <thead><tr><th>ID</th><th>Record</th><th>Actions</th></tr></thead>
+      <thead><tr><th>ID</th><th>Record</th>{% if resource == "courses" or resource == "articles" or resource == "assessments" %}<th>Visibility</th>{% endif %}<th>Actions</th></tr></thead>
       <tbody>
       {% for record in page %}
       <tr><td>{{ record.pk }}</td><td><strong>{{ record|truncatechars:100 }}</strong></td>
+        {% if resource == "courses" or resource == "articles" or resource == "assessments" %}
+        <td>
+          {% if not record.is_published %}Draft
+          {% elif resource == "articles" and record.published_at > now %}Scheduled
+          {% else %}Published{% endif %}
+        </td>
+        {% endif %}
         <td><a href="{% url 'management:edit' resource record.pk %}">Edit</a></td></tr>
-      {% empty %}<tr><td colspan="3">No records found. Add your first item.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="{% if resource == 'courses' or resource == 'articles' or resource == 'assessments' %}4{% else %}3{% endif %}">No records found. Add your first item.</td></tr>{% endfor %}
       </tbody>
     </table></div>
     {% include "management/pagination.html" %}
