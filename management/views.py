@@ -7,6 +7,7 @@ from django.db.models import Avg, Count, Max, Q, Sum
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
@@ -76,7 +77,7 @@ def content_list(request, resource):
     page = Paginator(entries.order_by("-pk"), 25).get_page(request.GET.get("page"))
     return render(request, "management/list.html", {
         "heading": config.label, "resource": resource,
-        "page": page, "query": query,
+        "page": page, "query": query, "now": timezone.now(),
     })
 
 
