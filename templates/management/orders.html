@@ -19,15 +19,15 @@
       <tbody>{% for order in page %}
         <tr><td>#{{ order.pk }}</td><td>{{ order.student.email }}</td><td>{{ order.course.title }}</td>
           <td>₹{{ order.amount }}</td><td>₹{{ order.refunded_amount }}</td>
-          <td>{{ order.get_status_display }}</td>
+          <td>{{ order.get_status_display }}{% if order.manual_payment_reference %}<small>Manual: {{ order.manual_payment_reference }}</small>{% endif %}</td>
           <td>
-          {% if order.status == "pending" %}
-            <form method="post" action="{% url 'management:order_action' order.pk 'approve' %}">{% csrf_token %}
-              <button type="submit" class="manage-action">Approve</button>
-            </form>
+          {% if order.status == "pending" and not order.gateway_order_id %}
+            <a class="manage-action" href="{% url 'management:approval_review' order.pk %}">Review &amp; approve</a>
+          {% elif order.status == "pending" %}
+            Awaiting gateway confirmation
           {% elif order.status == "paid" and order.gateway_payment_id %}
             <form method="post" action="{% url 'management:order_action' order.pk 'reconcile' %}">{% csrf_token %}
-              <button type="submit" class="manage-action">Check refunds</button>
+              <button type="submit" class="manage-action">Read provider status</button>
             </form>
           {% else %}—{% endif %}
           </td>
