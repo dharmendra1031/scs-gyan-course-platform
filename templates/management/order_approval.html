@@ -1,0 +1,46 @@
+{% extends "management/base.html" %}
+{% block title %}Review Order #{{ order.pk }}{% endblock %}
+{% block content %}
+  <div class="manage-title">
+    <div>
+      <p class="manage-eyebrow">PAYMENT REVIEW</p>
+      <h1>Order #{{ order.pk }}</h1>
+      <p>Review the student, course and amount before granting access.</p>
+    </div>
+    <a href="{% url 'management:orders' %}?status=pending">Back to pending orders</a>
+  </div>
+  <section class="manage-panel manage-editor">
+    <h2>Order details</h2>
+    <dl class="approval-details">
+      <div><dt>Student</dt><dd>{{ order.student.get_full_name|default:order.student.username }}</dd></div>
+      <div><dt>Email</dt><dd>{{ order.student.email }}</dd></div>
+      <div><dt>Course</dt><dd>{{ order.course.title }}</dd></div>
+      <div><dt>Amount to verify</dt><dd>₹{{ order.amount }}</dd></div>
+      <div><dt>Order status</dt><dd>{{ order.get_status_display }}</dd></div>
+      <div><dt>Requested</dt><dd>{{ order.created_at|date:"d M Y, h:i A" }}</dd></div>
+    </dl>
+    {% if gateway_started %}
+      <p class="manage-notice" role="alert">A Razorpay order already exists. Do not approve this manually. Wait for verified payment confirmation or review it with the payment provider.</p>
+    {% else %}
+      <p>Approve only after checking independent evidence of payment outside this system. This action activates course access; it does not collect money or create a GST invoice.</p>
+      <form method="post" action="{% url 'management:order_action' order.pk 'approve' %}">
+        {% csrf_token %}
+        <div class="manage-field">
+          <label for="payment-reference">Payment or receipt reference</label>
+          <input id="payment-reference" type="text" name="payment_reference" maxlength="120" minlength="6" required autocomplete="off" placeholder="External transaction or receipt number">
+          <small>Enter a verifiable external reference, not card numbers or sensitive payment details.</small>
+        </div>
+        <div class="manage-field">
+          <label for="confirm-payment">
+            <input id="confirm-payment" type="checkbox" name="confirm_payment" value="yes" required>
+            I have independently verified payment for this student, course and amount.
+          </label>
+        </div>
+        <div class="manage-editor-actions">
+          <button class="manage-button" type="submit">Approve course access</button>
+          <a href="{% url 'management:orders' %}?status=pending">Cancel</a>
+        </div>
+      </form>
+    {% endif %}
+  </section>
+{% endblock %}
