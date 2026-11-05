@@ -44,8 +44,12 @@ def dashboard(request):
     ]
     return render(request, "management/dashboard.html", {
         "stats": stats,
-        "recent_orders": Order.objects.select_related("student", "course")[:6],
-        "recent_enquiries": ContactEnquiry.objects.all()[:6],
+        "recent_orders": Order.objects.filter(
+            status=Order.Status.PENDING,
+        ).select_related("student", "course")[:6],
+        "recent_enquiries": ContactEnquiry.objects.filter(
+            status=ContactEnquiry.Status.NEW,
+        )[:6],
     })
 
 
