@@ -59,7 +59,8 @@
         </form>
         {% if course.price > 0 %}<p class="subtle">Course access starts after payment verification.</p>{% endif %}
       {% else %}
-        <a class="button button-primary full-width" href="{% url 'signup' %}">Create Student Account</a>
+        <a class="button button-primary full-width" href="{% url 'signup' %}?next={{ request.path|urlencode }}">Create Student Account</a>
+        <p class="subtle">Already registered? <a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to enroll</a></p>
       {% endif %}
     </aside>
   </div>
