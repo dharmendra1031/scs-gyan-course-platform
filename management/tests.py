@@ -80,13 +80,42 @@ class ManagementAccessTests(TestCase):
         self.assertEqual(self.client.get(url).status_code, 405)
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, Order.Status.PENDING)
-        self.assertRedirects(self.client.post(url), reverse("management:orders"))
+        review = reverse("management:approval_review", args=[self.order.pk])
+        self.assertRedirects(self.client.post(url), review)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.PENDING)
+        self.assertContains(self.client.get(review), "Amount to verify")
+        self.assertRedirects(self.client.post(url, {
+            "confirm_payment": "yes", "payment_reference": "BANK-RECEIPT-123",
+        }), reverse("management:orders"))
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, Order.Status.PAID)
+        self.assertEqual(self.order.manual_payment_reference, "BANK-RECEIPT-123")
+        self.assertEqual(self.order.manual_verified_by_id, self.owner.pk)
         self.assertEqual(
             self.client.get(reverse("management:order_action", args=[self.order.pk, "reconcile"])).status_code,
             405,
         )
+
+    def test_gateway_order_never_offers_manual_approval(self):
+        self.order.gateway_order_id = "order_already_started"
+        self.order.save(update_fields=["gateway_order_id"])
+        self.client.force_login(self.owner)
+        review = reverse("management:approval_review", args=[self.order.pk])
+        self.assertContains(self.client.get(review), "Do not approve this manually")
+        action = reverse("management:order_action", args=[self.order.pk, "approve"])
+        self.assertRedirects(self.client.post(action, {
+            "confirm_payment": "yes", "payment_reference": "BANK-REF-54321",
+        }), review)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.PENDING)
+
+    def test_student_cannot_view_payment_approval_review(self):
+        review = reverse("management:approval_review", args=[self.order.pk])
+        self.client.force_login(self.student)
+        self.assertEqual(self.client.get(review).status_code, 403)
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.get(review).status_code, 403)
 
     def test_enquiries_and_student_data_are_private(self):
         ContactEnquiry.objects.create(
